@@ -55,8 +55,6 @@
           shellHook = ''
             export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules"
             export GST_PLUGIN_SYSTEM_PATH_1_0="${gstPluginPath}"
-            export GST_PLUGIN_SCANNER="${pkgs.gst_all_1.gstreamer.dev}/libexec/gstreamer-1.0/gst-plugin-scanner"
-            export GST_PLUGIN_SCANNER_1_0="${pkgs.gst_all_1.gstreamer.dev}/libexec/gstreamer-1.0/gst-plugin-scanner"
             export WEBKIT_DISABLE_DMABUF_RENDERER=1
           '';
         };
