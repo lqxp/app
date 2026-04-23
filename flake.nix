@@ -11,7 +11,15 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        gstPlugins = with pkgs.gst_all_1; [
+        gstPlugins = [
+          pkgs.gst_all_1.gstreamer.out
+          pkgs.gst_all_1.gst-plugins-base
+          pkgs.gst_all_1.gst-plugins-good
+          pkgs.gst_all_1.gst-plugins-bad
+          pkgs.gst_all_1.gst-plugins-ugly
+          pkgs.gst_all_1.gst-libav
+        ];
+        gstTools = with pkgs.gst_all_1; [
           gstreamer
           gst-plugins-base
           gst-plugins-good
@@ -50,7 +58,7 @@
             pango
             webkitgtk_4_1
             xdotool
-          ]) ++ gstPlugins;
+          ]) ++ gstTools ++ gstPlugins;
 
           shellHook = ''
             export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules"
