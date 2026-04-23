@@ -6,3 +6,4 @@ out/
 src-tauri/target/
 .codex
 package-lock.json
+bun.lock
