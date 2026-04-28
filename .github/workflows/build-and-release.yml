@@ -123,3 +123,4 @@ jobs:
           prerelease: false
           generateReleaseNotes: true
           args: ${{ matrix.args }}
+          tauriScript: bunx tauri
