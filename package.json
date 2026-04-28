@@ -8,10 +8,10 @@
   "scripts": {
     "dev": "tauri dev",
     "start": "tauri dev",
-    "build": "tauri build",
+    "build": "scripts/tauri-build.sh",
     "build:win": "tauri build --target x86_64-pc-windows-msvc",
     "build:mac": "tauri build --target universal-apple-darwin",
-    "build:linux": "tauri build",
+    "build:linux": "scripts/tauri-build.sh",
     "tauri": "tauri",
     "typecheck": "tsc --noEmit"
   },

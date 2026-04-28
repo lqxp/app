@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "identifier": "com.qxp.client",
   "build": {
-    "beforeDevCommand": "cd QxpClient && bun install && bun vite --host 0.0.0.0",
-    "beforeBuildCommand": "cd QxpClient && bun install && bun vite build",
+    "beforeDevCommand": "cd QxpClient && bun install --no-save && bun vite --host 0.0.0.0",
+    "beforeBuildCommand": "cd QxpClient && bun install --no-save && bun vite build",
     "devUrl": "http://localhost:4173/#/",
     "frontendDist": "../serve.public"
   },
@@ -27,7 +27,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["appimage", "deb", "rpm"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
