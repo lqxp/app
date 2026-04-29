@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "identifier": "com.qxp.client",
   "build": {
-    "beforeDevCommand": "bun --cwd QxpClient install --no-save && bun --cwd QxpClient vite --host 0.0.0.0",
-    "beforeBuildCommand": "bun --cwd QxpClient run build",
+    "beforeDevCommand": "cd QxpClient && bun install --no-save && bun vite --host 0.0.0.0",
+    "beforeBuildCommand": "bun run --cwd QxpClient build",
     "devUrl": "http://localhost:4173/#/",
     "frontendDist": "../QxpClient/dist"
   },
