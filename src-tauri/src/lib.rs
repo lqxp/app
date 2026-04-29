@@ -1,5 +1,11 @@
+#[cfg(any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "netbsd",
+    target_os = "openbsd"
+))]
 use tauri::Manager;
-
 #[cfg(any(
     target_os = "linux",
     target_os = "dragonfly",
@@ -22,11 +28,12 @@ use webkit2gtk::{
     PermissionRequestExt,
 };
 
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
-        .setup(|app| {
+        .setup(|_app| {
             #[cfg(any(
                 target_os = "linux",
                 target_os = "dragonfly",
@@ -35,7 +42,7 @@ pub fn run() {
                 target_os = "openbsd"
             ))]
             {
-                let webview_window = app.get_webview_window("main").expect("main window not found");
+                let webview_window = _app.get_webview_window("main").expect("main window not found");
                 webview_window.with_webview(|webview: PlatformWebview| {
                     let webview = webview.inner();
 

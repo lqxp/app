@@ -20,6 +20,7 @@
         androidComposition = pkgs.androidenv.composeAndroidPackages {
           platformVersions = [
             "35"
+            "36"
             "latest"
           ];
           buildToolsVersions = [
@@ -96,15 +97,39 @@
           ]) ++ gstTools ++ gstPlugins;
 
           shellHook = ''
-            if [ -x "$HOME/.cargo/bin/cargo" ] && [ -d "$HOME/.rustup/toolchains" ]; then
-              export PATH="$HOME/.cargo/bin:$PATH"
-            fi
+            export RUSTUP_TOOLCHAIN="''${RUSTUP_TOOLCHAIN:-stable}"
+
+            export LQXP_RUSTUP_BIN_DIR="''${TMPDIR:-/tmp}/lqxp-client-rustup-bin-''${UID:-$(id -u)}"
+            mkdir -p "$LQXP_RUSTUP_BIN_DIR"
+
+            printf '%s\n' \
+              '#!/usr/bin/env bash' \
+              'exec rustup run "''${RUSTUP_TOOLCHAIN:-stable}" cargo "$@"' \
+              > "$LQXP_RUSTUP_BIN_DIR/cargo"
+
+            printf '%s\n' \
+              '#!/usr/bin/env bash' \
+              'exec rustup run "''${RUSTUP_TOOLCHAIN:-stable}" rustc "$@"' \
+              > "$LQXP_RUSTUP_BIN_DIR/rustc"
+
+            chmod +x "$LQXP_RUSTUP_BIN_DIR/cargo" "$LQXP_RUSTUP_BIN_DIR/rustc"
+            export PATH="$LQXP_RUSTUP_BIN_DIR:$PATH"
+            export CARGO="$LQXP_RUSTUP_BIN_DIR/cargo"
+            export RUSTC="$LQXP_RUSTUP_BIN_DIR/rustc"
+            hash -r 2>/dev/null || true
 
             export JAVA_HOME="${jdk.home}"
             export ANDROID_HOME="${androidSdkRoot}"
             export ANDROID_SDK_ROOT="${androidSdkRoot}"
-            export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
-            export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk-bundle"
+            android_ndk_dir="$ANDROID_SDK_ROOT/ndk-bundle"
+            if [ -d "$ANDROID_SDK_ROOT/ndk" ]; then
+              android_ndk_candidate="$(find "$ANDROID_SDK_ROOT/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+              if [ -n "$android_ndk_candidate" ]; then
+                android_ndk_dir="$android_ndk_candidate"
+              fi
+            fi
+            export ANDROID_NDK_HOME="$android_ndk_dir"
+            export ANDROID_NDK_ROOT="$android_ndk_dir"
             export NDK_HOME="$ANDROID_NDK_ROOT"
             export ANDROID_API_LEVEL="24"
             export ANDROID_PLATFORM="android-$ANDROID_API_LEVEL"
@@ -112,7 +137,8 @@
             export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"
 
             lqxp-rustup-android-targets() {
-              rustup target add $TAURI_ANDROID_RUST_TARGETS
+              rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
+              rustup target add --toolchain "$RUSTUP_TOOLCHAIN" $TAURI_ANDROID_RUST_TARGETS
             }
 
             if [ -d "$ANDROID_SDK_ROOT/cmake" ]; then
