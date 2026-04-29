@@ -62,10 +62,10 @@ jobs:
             args: --bundles appimage,deb,rpm
           - platform_name: Windows
             runner: windows-latest
-            args: --target x86_64-pc-windows-msvc
+            args: --target x86_64-pc-windows-msvc --bundles nsis
           - platform_name: macOS
             runner: macos-latest
-            args: --target universal-apple-darwin
+            args: --target universal-apple-darwin --bundles dmg
 
     steps:
       - name: Checkout repository
