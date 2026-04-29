@@ -3,6 +3,11 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+if [[ "${LQXP_TAURI_BUILD_RUNNING:-}" == "1" ]]; then
+  echo "Refusing to run scripts/tauri-build.sh from inside tauri build; check beforeBuildCommand." >&2
+  exit 1
+fi
+
 if [[ "$(uname -s)" == "Linux" && ! -x /usr/bin/xdg-open && "${LQXP_APPIMAGE_FHS:-}" != "1" ]]; then
   if [[ -d "$HOME/.cache/tauri" ]]; then
     chmod -R a+rX "$HOME/.cache/tauri"
@@ -17,4 +22,4 @@ if [[ "$(uname -s)" == "Linux" ]]; then
   rm -rf "src-tauri/target/release/bundle/appimage"
 fi
 
-exec bun tauri build "$@"
+LQXP_TAURI_BUILD_RUNNING=1 exec bun tauri build "$@"
