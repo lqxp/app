@@ -8,6 +8,25 @@
 }:
 
 let
+  # -----------------------
+  # Fenix (Rust toolchain)
+  # -----------------------
+  fenix = import (fetchTarball "https://github.com/nix-community/fenix/archive/master.tar.gz") {
+    inherit pkgs;
+  };
+
+  rustToolchain = fenix.combine [
+    fenix.stable.toolchain
+
+    fenix.targets.aarch64-linux-android.stable.rust-std
+    fenix.targets.armv7-linux-androideabi.stable.rust-std
+    fenix.targets.i686-linux-android.stable.rust-std
+    fenix.targets.x86_64-linux-android.stable.rust-std
+  ];
+
+  # -----------------------
+  # Android SDK
+  # -----------------------
   androidComposition = pkgs.androidenv.composeAndroidPackages {
     platformVersions = [
       "35"
@@ -51,8 +70,7 @@ in
 pkgs.mkShell {
 
   nativeBuildInputs = with pkgs; [
-    rustc
-    cargo
+    rustToolchain
     cargo-tauri
     cargo-ndk
 
@@ -86,6 +104,7 @@ pkgs.mkShell {
       pango
       webkitgtk_4_1
       xdotool
+      dbus
     ])
     ++ gstPlugins;
 
@@ -94,10 +113,18 @@ pkgs.mkShell {
     export ANDROID_HOME="${androidSdkRoot}"
     export ANDROID_SDK_ROOT="${androidSdkRoot}"
 
-    # NDK detection
+    # -----------------------
+    # NDK setup
+    # -----------------------
     android_ndk_dir="$ANDROID_SDK_ROOT/ndk-bundle"
+
     if [ -d "$ANDROID_SDK_ROOT/ndk" ]; then
-      android_ndk_candidate="$(find "$ANDROID_SDK_ROOT/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+      android_ndk_candidate="$(
+        find "$ANDROID_SDK_ROOT/ndk" \
+          -mindepth 1 -maxdepth 1 -type d \
+          | sort -V | tail -n 1
+      )"
+
       if [ -n "$android_ndk_candidate" ]; then
         android_ndk_dir="$android_ndk_candidate"
       fi
@@ -110,51 +137,81 @@ pkgs.mkShell {
     export ANDROID_API_LEVEL="24"
     export ANDROID_PLATFORM="android-$ANDROID_API_LEVEL"
 
-    # Tauri targets fix
-    : "''${TAURI_ANDROID_RUST_TARGETS:=aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android}"
-    export TAURI_ANDROID_RUST_TARGETS
-
+    # -----------------------
+    # PATH setup
+    # -----------------------
     export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"
 
     # CMake
     if [ -d "$ANDROID_SDK_ROOT/cmake" ]; then
-      CMAKE_ROOT="$(find "$ANDROID_SDK_ROOT/cmake" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+      CMAKE_ROOT="$(
+        find "$ANDROID_SDK_ROOT/cmake" \
+          -mindepth 1 -maxdepth 1 -type d \
+          | sort -V | tail -n 1
+      )"
       export PATH="$CMAKE_ROOT/bin:$PATH"
     fi
 
-    # AAPT2 fix
-    aapt2="$(find "$ANDROID_SDK_ROOT/build-tools" -name aapt2 -type f 2>/dev/null | sort -V | tail -n 1)"
-    if [ -n "$aapt2" ]; then
-      export GRADLE_OPTS="-Dorg.gradle.project.android.aapt2FromMavenOverride=$aapt2"
-    fi
-
+    # -----------------------
     # GStreamer / GTK
+    # -----------------------
     export GST_PLUGIN_SYSTEM_PATH_1_0="${gstPluginPath}"
     export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules"
     export WEBKIT_DISABLE_DMABUF_RENDERER=1
 
-    # Android linker setup
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${
+      pkgs.lib.makeLibraryPath (
+        with pkgs;
+        [
+          webkitgtk_4_1
+          gtk3
+          glib
+          gdk-pixbuf
+          pango
+          cairo
+          atkmm
+          at-spi2-atk
+          glib-networking
+          harfbuzz
+          librsvg
+          libsoup_3
+          openssl
+          dbus
+
+          gst_all_1.gstreamer
+          gst_all_1.gst-plugins-base
+          gst_all_1.gst-plugins-good
+          gst_all_1.gst-plugins-bad
+          gst_all_1.gst-plugins-ugly
+          gst_all_1.gst-libav
+        ]
+      )
+    }"
+
+    export GIO_EXTRA_MODULES="${pkgs.glib-networking}/lib/gio/modules"
+    export GTK_PATH="${pkgs.gtk3}/lib/gtk-3.0"
+
+    # -----------------------
+    # NDK linker setup
+    # -----------------------
     case "$(uname -s)-$(uname -m)" in
-      Linux-x86_64) android_host_tag="linux-x86_64" ;;
-      *) android_host_tag="" ;;
+      Linux-x86_64)
+        host="linux-x86_64"
+        ;;
+      *)
+        host=""
+        ;;
     esac
 
-    if [ -n "$android_host_tag" ]; then
-      ndk_bin="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/$android_host_tag/bin"
+    if [ -n "$host" ]; then
+      bin="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/$host/bin"
 
-      export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$ndk_bin/aarch64-linux-android$ANDROID_API_LEVEL-clang"
-      export CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER="$ndk_bin/armv7a-linux-androideabi$ANDROID_API_LEVEL-clang"
-      export CARGO_TARGET_I686_LINUX_ANDROID_LINKER="$ndk_bin/i686-linux-android$ANDROID_API_LEVEL-clang"
-      export CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER="$ndk_bin/x86_64-linux-android$ANDROID_API_LEVEL-clang"
+      export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$bin/aarch64-linux-android$ANDROID_API_LEVEL-clang"
+      export CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER="$bin/armv7a-linux-androideabi$ANDROID_API_LEVEL-clang"
+      export CARGO_TARGET_I686_LINUX_ANDROID_LINKER="$bin/i686-linux-android$ANDROID_API_LEVEL-clang"
+      export CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER="$bin/x86_64-linux-android$ANDROID_API_LEVEL-clang"
     fi
 
-    # optional .env
-    if [ -f .env ]; then
-      set -a
-      . ./.env
-      set +a
-    fi
-
-    echo "✔ nix-shell Tauri Android environment ready"
+    echo "✔ Tauri Android + Fenix environment ready"
   '';
 }
