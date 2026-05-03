@@ -133,7 +133,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ needs.prepare-release.outputs.tag_name }}
-          releaseName: LQXP Client v__VERSION__
+          releaseName: QxChat v__VERSION__
           releaseBody: |
             Build automatique GitHub Actions pour la version __VERSION__.
           releaseDraft: false
@@ -193,9 +193,15 @@ jobs:
             (cd QxpClient && bun install --no-save)
             rustup toolchain install "${RUSTUP_TOOLCHAIN:-stable}" --profile minimal
             rustup target add --toolchain "${RUSTUP_TOOLCHAIN:-stable}" $TAURI_ANDROID_RUST_TARGETS
-            bun tauri android build
+            mkdir -p src-tauri/gen/android/app/src/main/res
+            cp -R src-tauri/icons/android/. src-tauri/gen/android/app/src/main/res/
+            bun tauri android build --apk --target aarch64
 
-            apk="src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk"
+            apk="$(find src-tauri/gen/android/app/build/outputs/apk -path '*/release/*.apk' -type f | sort | head -n1)"
+            if [ -z "$apk" ]; then
+              echo "::error::No release APK produced."
+              exit 1
+            fi
             apksigner="$(find -L "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n1)"
             zipalign="$(find -L "$ANDROID_HOME/build-tools" -type f -name zipalign | sort -V | tail -n1)"
             "$apksigner" verify --verbose --print-certs "$apk"
@@ -205,23 +211,21 @@ jobs:
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: lqxp-client-android
+          name: qxchat-android
           if-no-files-found: error
           path: |
-            src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
-            src-tauri/gen/android/app/build/outputs/bundle/universalRelease/*.aab
+            src-tauri/gen/android/app/build/outputs/apk/**/release/*.apk
 
       - name: Upload Android release assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare-release.outputs.tag_name }}
-          name: LQXP Client v${{ needs.prepare-release.outputs.app_version }}
+          name: QxChat v${{ needs.prepare-release.outputs.app_version }}
           body: |
             Build automatique GitHub Actions pour la version ${{ needs.prepare-release.outputs.app_version }}.
           generate_release_notes: true
           files: |
-            src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
-            src-tauri/gen/android/app/build/outputs/bundle/universalRelease/*.aab
+            src-tauri/gen/android/app/build/outputs/apk/**/release/*.apk
 
   # build-ios:
   #   name: Build iOS IPA
@@ -336,7 +340,7 @@ jobs:
   #       uses: softprops/action-gh-release@v2
   #       with:
   #         tag_name: ${{ needs.prepare-release.outputs.tag_name }}
-  #         name: LQXP Client v${{ needs.prepare-release.outputs.app_version }}
+  #         name: QxChat v${{ needs.prepare-release.outputs.app_version }}
   #         body: |
   #           Build automatique GitHub Actions pour la version ${{ needs.prepare-release.outputs.app_version }}.
   #         generate_release_notes: true
