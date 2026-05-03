@@ -31,6 +31,27 @@ command -v rustup >/dev/null 2>&1 || {
   exit 1
 }
 
+export RUSTUP_TOOLCHAIN="${RUSTUP_TOOLCHAIN:-stable}"
+export TMPDIR="/tmp"
+export LQXP_RUSTUP_BIN_DIR="/tmp/lqxp-client-rustup-bin-${UID:-$(id -u)}"
+mkdir -p "$LQXP_RUSTUP_BIN_DIR"
+
+cat > "$LQXP_RUSTUP_BIN_DIR/cargo" <<'EOF'
+#!/usr/bin/env bash
+exec rustup run "${RUSTUP_TOOLCHAIN:-stable}" cargo "$@"
+EOF
+
+cat > "$LQXP_RUSTUP_BIN_DIR/rustc" <<'EOF'
+#!/usr/bin/env bash
+exec rustup run "${RUSTUP_TOOLCHAIN:-stable}" rustc "$@"
+EOF
+
+chmod +x "$LQXP_RUSTUP_BIN_DIR/cargo" "$LQXP_RUSTUP_BIN_DIR/rustc"
+export PATH="$LQXP_RUSTUP_BIN_DIR:$PATH"
+export CARGO="$LQXP_RUSTUP_BIN_DIR/cargo"
+export RUSTC="$LQXP_RUSTUP_BIN_DIR/rustc"
+hash -r 2>/dev/null || true
+
 command -v cargo >/dev/null 2>&1 || {
   echo "error: cargo is required." >&2
   exit 1
@@ -49,8 +70,8 @@ fi
 if declare -F lqxp-rustup-android-targets >/dev/null 2>&1; then
   lqxp-rustup-android-targets
 else
-  rustup toolchain install "${RUSTUP_TOOLCHAIN:-stable}" --profile minimal
-  rustup target add --toolchain "${RUSTUP_TOOLCHAIN:-stable}" \
+  rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
+  rustup target add --toolchain "$RUSTUP_TOOLCHAIN" \
     aarch64-linux-android \
     armv7-linux-androideabi \
     i686-linux-android \
