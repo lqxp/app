@@ -43,7 +43,7 @@ let
 
     src = ../client;
 
-    npmDepsHash = "sha256-MlBtJLdC4VEqWIqB4IgtkbyFXRsYgXa920exbUXYnfI=";
+    npmDepsHash = lib.fakeHash;
     npmDepsFetcherVersion = 2;
     makeCacheWritable = true;
 
