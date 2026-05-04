@@ -1,5 +1,4 @@
 name: Update pnpm fetch hash
-
 on:
   workflow_dispatch:
   push:
@@ -7,21 +6,17 @@ on:
       - "client/pnpm-lock.yaml"
       - "nix/qxchat.nix"
       - ".github/workflows/update-npm-deps-hash.yml"
-
 jobs:
   update-hash:
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-
       - uses: cachix/install-nix-action@v27
-
       - name: Try build and capture expected hash
         id: hash
         shell: bash
@@ -34,23 +29,19 @@ jobs:
             echo "already_ok=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-
           hash=$(echo "$out" | sed -n 's/.*got:[[:space:]]*\(sha256-[A-Za-z0-9+/=]*\).*/\1/p' | head -n1)
           if [ -z "$hash" ]; then
             echo "Could not find expected sha256 hash in nix output"
             exit 1
           fi
-
           echo "hash=$hash" >> "$GITHUB_OUTPUT"
-
       - name: Patch nix/qxchat.nix
         if: steps.hash.outputs.already_ok != 'true'
         shell: bash
         run: |
           sed -i "s#hash = \"sha256-[^\"]*\";#hash = \"${{ steps.hash.outputs.hash }}\";#" nix/qxchat.nix
           grep -n "hash = \"sha256-" nix/qxchat.nix
-
-            - name: Create Pull Request
+      - name: Create Pull Request
         if: steps.hash.outputs.already_ok != 'true'
         uses: peter-evans/create-pull-request@v7
         with:
@@ -58,7 +49,6 @@ jobs:
           title: "chore(nix): update pnpm fetch hash"
           body: |
             Automated update of the `pnpm.fetchDeps` hash in `nix/qxchat.nix`.
-
             - Triggered by changes to `client/pnpm-lock.yaml` or manual dispatch
             - Hash extracted from Nix fixed-output derivation error (`got: sha256-...`)
           branch: "ci/update-pnpm-fetch-hash"
