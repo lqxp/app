@@ -74,6 +74,10 @@ rustPlatform.buildRustPackage {
   ];
 
   preBuild = ''
+    export HOME="$TMPDIR/home"
+    export npm_config_cache="$TMPDIR/npm-cache"
+    mkdir -p "$HOME" "$npm_config_cache"
+
     frontend_dir=""
     if [ -d client ]; then
       frontend_dir="client"
@@ -87,13 +91,12 @@ rustPlatform.buildRustPackage {
     pushd "$frontend_dir" >/dev/null
     npm ci
     npm run build
-    popd >/dev/null
-  '';
 
-  postPatch = ''
-    cat > client/dist/runtime-config.js <<'EOF'
+    cat > dist/runtime-config.js <<'EOF'
 window.__QXP_RUNTIME__ = {"apiBaseUrl":"https://qxp.kisakay.com","rtc":{"callsEnabled":true,"callsUnavailableReason":"","relayOnly":true,"turnCredential":"df64240e730e15fdfb75d6cff95367b95ed341bd98517544","turnUrls":["turn:turn.qxp.kisakay.com:3478?transport=udp","turn:turn.qxp.kisakay.com:3478?transport=tcp","turns:turn.qxp.kisakay.com:5349?transport=tcp"],"turnUsername":"qxp-turn"},"serverOrigin":"https://qxp.kisakay.com","wsUrl":"wss://qxp.kisakay.com/ws"};
 EOF
+
+    popd >/dev/null
   '';
 
   buildInputs = [
