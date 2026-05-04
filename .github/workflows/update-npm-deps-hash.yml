@@ -1,0 +1,68 @@
+name: Update npmDepsHash
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "client/package-lock.json"
+      - "nix/qxchat.nix"
+
+jobs:
+  update-hash:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: cachix/install-nix-action@v27
+
+      - name: Try build and capture expected hash
+        id: hash
+        shell: bash
+        run: |
+          set +e
+          out=$(nix build .#qxchat 2>&1)
+          code=$?
+          echo "$out"
+          if [ $code -eq 0 ]; then
+            echo "already_ok=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          hash=$(echo "$out" | sed -n 's/.*got:[[:space:]]*\(sha256-[A-Za-z0-9+/=]*\).*/\1/p' | head -n1)
+          if [ -z "$hash" ]; then
+            echo "Impossible de trouver le hash dans la sortie nix."
+            exit 1
+          fi
+          echo "hash=$hash" >> "$GITHUB_OUTPUT"
+
+      - name: Patch nix/qxchat.nix
+        if: steps.hash.outputs.already_ok != 'true'
+        shell: bash
+        run: |
+          sed -i "s#npmDepsHash = \"sha256-[^\"]*\";#npmDepsHash = \"${{ steps.hash.outputs.hash }}\";#" nix/qxchat.nix
+          grep -n "npmDepsHash" nix/qxchat.nix
+
+            - name: Create Pull Request
+        if: steps.hash.outputs.already_ok != 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore(nix): update npmDepsHash"
+          title: "chore(nix): update npmDepsHash"
+          body: |
+            Automated update of `npmDepsHash` in `nix/qxchat.nix`.
+
+            - Triggered by changes to `client/package-lock.json` or manual dispatch
+            - Hash extracted from Nix fixed-output derivation error (`got: sha256-...`)
+          branch: "ci/update-npm-deps-hash"
+          delete-branch: true
+          labels: |
+            ci
+            nix
+          add-paths: |
+            nix/qxchat.nix
