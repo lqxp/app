@@ -26,7 +26,7 @@
   gst_all_1,
   pipewire,
   libdrm,
-  libgbm,
+  libgbm ? mesa,
   libglvnd,
   mesa,
   libepoxy,
