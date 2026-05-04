@@ -20,12 +20,6 @@ On NixOS, enter the prepared shell first:
 nix develop
 ```
 
-If you do not use flakes:
-
-```bash
-nix-shell
-```
-
 ## Development
 
 ```bash
@@ -51,14 +45,14 @@ bun run build:linux
 iOS builds require macOS with the full Xcode app installed.
 
 ```bash
-nix-shell
+nix develop
 bun run ios:build --export-method development
 ```
 
 For development on a simulator or device:
 
 ```bash
-nix-shell
+nix develop
 bun run ios:dev -- --open
 ```
 
@@ -162,6 +156,55 @@ bun run build:android
 The script also disables the Gradle daemon for Android builds because Gradle daemons can keep stale Tauri IPC environment variables.
 
 The GitHub workflow for simulator builds and signed IPA builds is documented in [docs/tauri-ios.md](docs/tauri-ios.md).
+
+
+### QxChat NixOS integration (flake example)
+
+This setup fetches QxChat from GitHub, imports its NixOS module, adds its package via overlay, and enables it system-wide.
+
+```nix flake.nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+    qxchat-src = {
+      url = "git+https://github.com/lqxp/app.git?ref=main&submodules=1";
+      flake = false;
+    };
+  };
+
+  outputs = { nixpkgs, qxchat-src, ... }:
+  let
+    system = "x86_64-linux";
+  in {
+    nixosConfigurations.my-host = nixpkgs.lib.nixosSystem {
+      inherit system;
+      modules = [
+        # QxChat module + package overlay
+        {
+          imports = [ "${qxchat-src}/nix/module.nix" ];
+
+          nixpkgs.overlays = [
+            (final: prev: {
+              qxchat = prev.callPackage "${qxchat-src}/nix/qxchat.nix" { };
+            })
+          ];
+
+          programs.qxchat.enable = true;
+        }
+
+        ./configuration.nix
+      ];
+    };
+  };
+}
+```
+
+Then apply it with:
+
+```bash
+sudo nixos-rebuild switch --flake .#my-host
+```
 
 ## Permissions
 

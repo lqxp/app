@@ -7,7 +7,7 @@ The iOS build belongs to this repository root. The Tauri project is `src-tauri`,
 iOS builds require macOS with the full Xcode app installed.
 
 ```bash
-nix-shell
+nix develop
 bun run ios:build --export-method development
 ```
 
@@ -33,7 +33,7 @@ src-tauri/gen/apple/build/arm64/
 ## Development on a simulator or device
 
 ```bash
-nix-shell
+nix develop
 bun run ios:dev -- --open
 ```
 

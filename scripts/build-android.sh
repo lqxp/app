@@ -19,14 +19,9 @@ if [[ "${LQXP_ANDROID_BUILD_RUNNING:-}" != "1" ]]; then
   if command -v nix >/dev/null 2>&1 && [[ -f flake.nix ]]; then
     echo "Entering nix develop for Android build..."
     exec env TMPDIR=/tmp nix develop --command env TMPDIR=/tmp LQXP_ANDROID_BUILD_RUNNING=1 scripts/build-android.sh "$@"
-  elif [[ "${IN_NIX_SHELL:-}" != "pure" && "${IN_NIX_SHELL:-}" != "impure" ]]; then
-    if command -v nix-shell >/dev/null 2>&1 && [[ -f shell.nix ]]; then
-      echo "Entering nix-shell for Android build..."
-      printf -v quoted_args "%q " "$@"
-      exec env TMPDIR=/tmp nix-shell --run "TMPDIR=/tmp LQXP_ANDROID_BUILD_RUNNING=1 scripts/build-android.sh ${quoted_args}"
     fi
 
-  echo "warning: not running inside nix-shell/nix develop, continuing with the current environment." >&2
+  echo "warning: not running inside nix develop, continuing with the current environment." >&2
   fi
 fi
 
@@ -163,12 +158,12 @@ EOF
 }
 
 if [[ -z "${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}" ]]; then
-  echo "error: ANDROID_SDK_ROOT/ANDROID_HOME is not set. Run through nix-shell or nix develop." >&2
+  echo "error: ANDROID_SDK_ROOT/ANDROID_HOME is not set. Run through nix develop." >&2
   exit 1
 fi
 
 if [[ -z "${ANDROID_NDK_ROOT:-${ANDROID_NDK_HOME:-${NDK_HOME:-}}}" ]]; then
-  echo "error: ANDROID_NDK_ROOT/ANDROID_NDK_HOME/NDK_HOME is not set. Run through nix-shell or nix develop." >&2
+  echo "error: ANDROID_NDK_ROOT/ANDROID_NDK_HOME/NDK_HOME is not set. Run through nix develop." >&2
   exit 1
 fi
 
