@@ -38,11 +38,13 @@ let
   pname = "qxchat";
   version = "1.0.0";
 
+  frontendSrc = ../client;
+
   frontend = stdenvNoCC.mkDerivation {
     pname = "${pname}-frontend";
     inherit version;
 
-    src = ../client;
+    src = frontendSrc;
 
     nativeBuildInputs = [
       nodejs
@@ -50,7 +52,8 @@ let
     ];
 
     pnpmDeps = pnpm.fetchDeps {
-      inherit pname version src;
+      inherit pname version;
+      src = frontendSrc;
       hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     };
 
