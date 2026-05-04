@@ -44,6 +44,8 @@ let
     src = ../client;
 
     npmDepsHash = "sha256-My31JQzv3Whq0eBdFMZ7QinGUVmaeT5Q/RyDT+mUxcA=";
+    npmDepsFetcherVersion = 2;
+    makeCacheWritable = true;
 
     npmBuildScript = "build:tauri";
 
