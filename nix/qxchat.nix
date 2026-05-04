@@ -22,6 +22,7 @@
   librsvg,
   dbus,
   gst_all_1,
+  pipewire,
 }:
 
 let
@@ -35,6 +36,7 @@ let
     gst_all_1.gst-plugins-bad
     gst_all_1.gst-plugins-ugly
     gst_all_1.gst-libav
+    pipewire
   ];
 
   gstPluginPath = lib.concatStringsSep ":" (map (pkg: "${pkg}/lib/gstreamer-1.0") gstPlugins);
