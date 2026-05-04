@@ -45,7 +45,7 @@ jobs:
         if: steps.hash.outputs.already_ok != 'true'
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN_PAT != '' && secrets.GITHUB_TOKEN_PAT || github.token }}
+          token: ${{ secrets.NIXOS_BUILD_USER_PAT_TOKEN != '' && secrets.NIXOS_BUILD_USER_PAT_TOKEN || github.token }}
           commit-message: "chore(nix): update pnpm fetch hash"
           title: "chore(nix): update pnpm fetch hash"
           body: |
