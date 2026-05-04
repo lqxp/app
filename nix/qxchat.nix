@@ -25,6 +25,7 @@
   pipewire,
   libdrm,
   libgbm,
+  libglvnd,
   mesa,
 }:
 
@@ -44,6 +45,27 @@ let
 
   gstPluginPath = lib.concatStringsSep ":" (map (pkg: "${pkg}/lib/gstreamer-1.0") gstPlugins);
   pipewireSpaPath = "${pipewire}/lib/spa-0.2";
+  runtimeLibPath = lib.makeLibraryPath ([
+    gtk3
+    webkitgtk_4_1
+    libsoup_3
+    openssl
+    glib
+    gdk-pixbuf
+    pango
+    cairo
+    atkmm
+    at-spi2-atk
+    glib-networking
+    harfbuzz
+    librsvg
+    dbus
+    libdrm
+    libgbm
+    libglvnd
+    mesa
+    pipewire
+  ] ++ gstPlugins);
 
   desktopItem = makeDesktopItem {
     name = "qxchat";
@@ -106,6 +128,7 @@ EOF
     dbus
     libdrm
     libgbm
+    libglvnd
     mesa
   ]
   ++ gstPlugins;
@@ -121,6 +144,7 @@ EOF
       --unset GST_PLUGIN_SCANNER \
       --unset GST_PLUGIN_SCANNER_1_0 \
       --set GST_REGISTRY_1_0 "/tmp/qxchat-gst-registry.bin" \
+      --set LD_LIBRARY_PATH "${runtimeLibPath}" \
       --set GIO_MODULE_DIR "${glib-networking}/lib/gio/modules" \
       --set GIO_EXTRA_MODULES "${glib-networking}/lib/gio/modules" \
       --set GST_PLUGIN_SYSTEM_PATH_1_0 "${gstPluginPath}" \
