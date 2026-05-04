@@ -58,7 +58,7 @@ rustPlatform.buildRustPackage {
   cargoRoot = "src-tauri";
 
   cargoLock = {
-    lockFile = ../client/src-tauri/Cargo.lock;
+    lockFile = ../src-tauri/Cargo.lock;
   };
 
   nativeBuildInputs = [
