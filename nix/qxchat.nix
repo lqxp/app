@@ -1,7 +1,8 @@
 {
   lib,
   rustPlatform,
-  buildNpmPackage,
+  stdenvNoCC,
+  pnpm,
   pkg-config,
   makeWrapper,
   wrapGAppsHook4,
@@ -37,17 +38,28 @@ let
   pname = "qxchat";
   version = "1.0.0";
 
-  frontend = buildNpmPackage {
+  frontend = stdenvNoCC.mkDerivation {
     pname = "${pname}-frontend";
     inherit version;
 
     src = ../client;
 
-    npmDepsHash = "sha256-QmDAVMfMOwHxwlNTVue5NKPhfJfxzGbnowqLYyBUQFo=";
-    npmDepsFetcherVersion = 2;
-    makeCacheWritable = true;
+    nativeBuildInputs = [
+      nodejs
+      pnpm.configHook
+    ];
 
-    npmBuildScript = "build:tauri";
+    pnpmDeps = pnpm.fetchDeps {
+      inherit pname version src;
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+    };
+
+    buildPhase = ''
+      runHook preBuild
+      pnpm install --offline --frozen-lockfile
+      pnpm run build:tauri
+      runHook postBuild
+    '';
 
     installPhase = ''
       runHook preInstall
@@ -126,7 +138,6 @@ rustPlatform.buildRustPackage {
     wrapGAppsHook4
     copyDesktopItems
     gobject-introspection
-    nodejs
   ];
 
   postPatch = ''
