@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          out=$(nix-build -E 'with import <nixpkgs> {}; callPackage ./nix/qxchat.nix {}' 2>&1)
+          out=$(nix-build -E 'let pkgs = import (builtins.fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-24.05.tar.gz") {}; in pkgs.callPackage ./nix/qxchat.nix {}' 2>&1)
           code=$?
           echo "$out"
           if [ $code -eq 0 ]; then
