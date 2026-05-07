@@ -3,6 +3,18 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+load_dotenv() {
+  if [[ -f .env ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source .env
+    set +a
+    export LQXP_DOTENV_LOADED=1
+  fi
+}
+
+load_dotenv
+
 if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "error: iOS builds require macOS with the full Xcode app installed." >&2
   exit 1

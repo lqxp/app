@@ -3,6 +3,18 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+load_dotenv() {
+  if [[ -f .env ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source .env
+    set +a
+    export LQXP_DOTENV_LOADED=1
+  fi
+}
+
+load_dotenv
+
 if [[ "${LQXP_TAURI_BUILD_RUNNING:-}" == "1" ]]; then
   echo "Refusing to run scripts/tauri-build.sh from inside tauri build; check beforeBuildCommand." >&2
   exit 1

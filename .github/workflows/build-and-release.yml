@@ -26,6 +26,18 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  QXP_RUNTIME_CONFIG_URL: ${{ vars.QXP_RUNTIME_CONFIG_URL }}
+  QXP_SERVER_ORIGIN: ${{ vars.QXP_SERVER_ORIGIN }}
+  QXP_API_BASE_URL: ${{ vars.QXP_API_BASE_URL }}
+  QXP_WS_URL: ${{ vars.QXP_WS_URL }}
+  QXP_TURN_URLS: ${{ vars.QXP_TURN_URLS }}
+  QXP_TURN_USERNAME: ${{ vars.QXP_TURN_USERNAME }}
+  QXP_RELAY_ONLY: ${{ vars.QXP_RELAY_ONLY }}
+  QXP_CALLS_ENABLED: ${{ vars.QXP_CALLS_ENABLED }}
+  QXP_CALLS_UNAVAILABLE_REASON: ${{ vars.QXP_CALLS_UNAVAILABLE_REASON }}
+  QXP_TURN_CREDENTIAL: ${{ secrets.QXP_TURN_CREDENTIAL }}
+
 jobs:
   prepare-release:
     name: Prepare Release
@@ -131,6 +143,16 @@ jobs:
         uses: tauri-apps/tauri-action@v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          QXP_RUNTIME_CONFIG_URL: ${{ env.QXP_RUNTIME_CONFIG_URL }}
+          QXP_SERVER_ORIGIN: ${{ env.QXP_SERVER_ORIGIN }}
+          QXP_API_BASE_URL: ${{ env.QXP_API_BASE_URL }}
+          QXP_WS_URL: ${{ env.QXP_WS_URL }}
+          QXP_TURN_URLS: ${{ env.QXP_TURN_URLS }}
+          QXP_TURN_USERNAME: ${{ env.QXP_TURN_USERNAME }}
+          QXP_TURN_CREDENTIAL: ${{ env.QXP_TURN_CREDENTIAL }}
+          QXP_RELAY_ONLY: ${{ env.QXP_RELAY_ONLY }}
+          QXP_CALLS_ENABLED: ${{ env.QXP_CALLS_ENABLED }}
+          QXP_CALLS_UNAVAILABLE_REASON: ${{ env.QXP_CALLS_UNAVAILABLE_REASON }}
         with:
           tagName: ${{ needs.prepare-release.outputs.tag_name }}
           releaseName: QxChat v__VERSION__
@@ -185,6 +207,17 @@ jobs:
 
       - name: Build Android APK
         shell: bash
+        env:
+          QXP_RUNTIME_CONFIG_URL: ${{ env.QXP_RUNTIME_CONFIG_URL }}
+          QXP_SERVER_ORIGIN: ${{ env.QXP_SERVER_ORIGIN }}
+          QXP_API_BASE_URL: ${{ env.QXP_API_BASE_URL }}
+          QXP_WS_URL: ${{ env.QXP_WS_URL }}
+          QXP_TURN_URLS: ${{ env.QXP_TURN_URLS }}
+          QXP_TURN_USERNAME: ${{ env.QXP_TURN_USERNAME }}
+          QXP_TURN_CREDENTIAL: ${{ env.QXP_TURN_CREDENTIAL }}
+          QXP_RELAY_ONLY: ${{ env.QXP_RELAY_ONLY }}
+          QXP_CALLS_ENABLED: ${{ env.QXP_CALLS_ENABLED }}
+          QXP_CALLS_UNAVAILABLE_REASON: ${{ env.QXP_CALLS_UNAVAILABLE_REASON }}
         run: |
           # shellcheck disable=SC2016
           nix develop --command bash -lc '
@@ -332,8 +365,16 @@ jobs:
   #         APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM }}
   #         IOS_EXPORT_METHOD: ${{ inputs.ios_export_method || 'app-store-connect' }}
   #         IOS_BUILD_NUMBER: ${{ inputs.ios_build_number || github.run_number }}
-  #         QXP_RUNTIME_CONFIG_URL: ${{ vars.QXP_RUNTIME_CONFIG_URL || 'https://qxp.kisakay.com/' }}
-  #         QXP_SERVER_ORIGIN: ${{ vars.QXP_SERVER_ORIGIN || 'https://qxp.kisakay.com' }}
+  #         QXP_RUNTIME_CONFIG_URL: ${{ env.QXP_RUNTIME_CONFIG_URL }}
+  #         QXP_SERVER_ORIGIN: ${{ env.QXP_SERVER_ORIGIN }}
+  #         QXP_API_BASE_URL: ${{ env.QXP_API_BASE_URL }}
+  #         QXP_WS_URL: ${{ env.QXP_WS_URL }}
+  #         QXP_TURN_URLS: ${{ env.QXP_TURN_URLS }}
+  #         QXP_TURN_USERNAME: ${{ env.QXP_TURN_USERNAME }}
+  #         QXP_TURN_CREDENTIAL: ${{ env.QXP_TURN_CREDENTIAL }}
+  #         QXP_RELAY_ONLY: ${{ env.QXP_RELAY_ONLY }}
+  #         QXP_CALLS_ENABLED: ${{ env.QXP_CALLS_ENABLED }}
+  #         QXP_CALLS_UNAVAILABLE_REASON: ${{ env.QXP_CALLS_UNAVAILABLE_REASON }}
 
   #     - name: Upload iOS artifacts
   #       uses: actions/upload-artifact@v4

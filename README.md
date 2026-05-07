@@ -32,6 +32,8 @@ bun run dev
 bun run build
 ```
 
+`scripts/tauri-build.sh`, `scripts/build-android.sh`, and `scripts/ios-build.sh` automatically load a local `.env` file when present, so the packaged runtime can be injected consistently for Desktop, Android, and iOS.
+
 Platform helpers are also available:
 
 ```bash
@@ -39,6 +41,45 @@ bun run build:mac
 bun run build:win
 bun run build:linux
 ```
+
+## Runtime config injection
+
+The packaged web client runtime payload (`window.__QXP_RUNTIME__`) can be generated in two ways:
+
+1. from `QXP_RUNTIME_CONFIG_URL`, by fetching a remote production page and extracting its runtime payload
+2. directly from environment variables during build
+
+Supported environment variables:
+
+```properties
+QXP_RUNTIME_CONFIG_URL=https://example.com/
+QXP_SERVER_ORIGIN=https://example.com
+QXP_API_BASE_URL=https://example.com
+QXP_WS_URL=wss://example.com/ws
+QXP_TURN_URLS=turn:turn.example.com:3478?transport=udp,turns:turn.example.com:5349?transport=tcp
+QXP_TURN_USERNAME=qxp-turn
+QXP_TURN_CREDENTIAL=replace-me
+QXP_RELAY_ONLY=true
+QXP_CALLS_ENABLED=true
+QXP_CALLS_UNAVAILABLE_REASON=
+```
+
+`QXP_RUNTIME_CONFIG_URL` is optional. If it is omitted, `client/scripts/sync-runtime-config.mjs` builds `client/dist/runtime-config.js` directly from the other variables.
+
+Example local `.env`:
+
+```properties
+QXP_SERVER_ORIGIN=https://chat.example.com
+QXP_API_BASE_URL=https://chat.example.com
+QXP_WS_URL=wss://chat.example.com/ws
+QXP_TURN_URLS=turn:turn.example.com:3478?transport=udp,turns:turn.example.com:5349?transport=tcp
+QXP_TURN_USERNAME=qxp-turn
+QXP_TURN_CREDENTIAL=replace-me
+QXP_RELAY_ONLY=true
+QXP_CALLS_ENABLED=true
+```
+
+In GitHub Actions, store public runtime values in repository/environment `Variables` and sensitive values such as `QXP_TURN_CREDENTIAL` in `Secrets`.
 
 ## iOS
 
@@ -81,7 +122,7 @@ To build a release APK:
 bun run build:android -- --apk --target aarch64
 ```
 
-Release APK signing is configured through environment variables. Via `flake.nix` and `scripts/build-android.sh` load a local `.env` file automatically if it exists. `.env`, keystores, and generated Gradle signing files are ignored by git.
+Release APK signing is configured through environment variables. `scripts/build-android.sh` loads a local `.env` file automatically if it exists, which can contain both Android signing settings and QXP runtime injection values. `.env`, keystores, and generated Gradle signing files are ignored by git.
 
 Create a new local signing password and `.env` file:
 
