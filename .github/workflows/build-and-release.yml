@@ -249,7 +249,7 @@ jobs:
             cat client/dist/runtime-config.js
             echo "----------------------------------------"
 
-            node <<"EOF"
+            node <<EOF
             const fs = require("fs");
             const vm = require("vm");
 
