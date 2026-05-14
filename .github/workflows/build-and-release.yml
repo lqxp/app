@@ -111,6 +111,16 @@ jobs:
           targets: ${{ matrix.runner == 'macos-latest' &&
             'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
+      - name: Verify Rust toolchain binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup show active-toolchain
+          command -v cargo
+          cargo --version
+          command -v rustc
+          rustc --version
+
       - name: Cache Rust build
         uses: swatinem/rust-cache@v2
         with:
