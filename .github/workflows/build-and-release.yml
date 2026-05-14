@@ -249,7 +249,7 @@ jobs:
             cat client/dist/runtime-config.js
             echo "----------------------------------------"
 
-            node <<EOF
+            node -e '
             const fs = require("fs");
             const vm = require("vm");
 
@@ -271,9 +271,9 @@ jobs:
             if (!apiBaseUrl) throw new Error("runtime-config.js missing apiBaseUrl");
             if (!wsUrl) throw new Error("runtime-config.js missing wsUrl");
             if (apiBaseUrl !== expectedApiBaseUrl) {
-              throw new Error(`Unexpected apiBaseUrl: ${apiBaseUrl} (expected ${expectedApiBaseUrl})`);
+              throw new Error("Unexpected apiBaseUrl: " + apiBaseUrl + " (expected " + expectedApiBaseUrl + ")");
             }
-            EOF
+            '
 
             rustup toolchain install "${RUSTUP_TOOLCHAIN:-stable}" --profile minimal
             rustup target add --toolchain "${RUSTUP_TOOLCHAIN:-stable}" $TAURI_ANDROID_RUST_TARGETS
