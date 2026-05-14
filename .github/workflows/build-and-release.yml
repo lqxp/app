@@ -87,12 +87,20 @@ jobs:
           - platform_name: Linux
             runner: ubuntu-22.04
             args: --bundles appimage,deb,rpm
+            release_files: |
+              src-tauri/target/release/bundle/appimage/*.AppImage
+              src-tauri/target/release/bundle/deb/*.deb
+              src-tauri/target/release/bundle/rpm/*.rpm
           - platform_name: Windows
             runner: windows-latest
             args: --target x86_64-pc-windows-msvc --bundles nsis
+            release_files: |
+              src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
           - platform_name: macOS
             runner: macos-latest
             args: --target universal-apple-darwin --bundles dmg
+            release_files: |
+              src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
 
     steps:
       - name: Checkout repository
@@ -142,17 +150,9 @@ jobs:
             curl \
             libxdo-dev
 
-      - name: Install frontend dependencies (root)
-        run: bun install --frozen-lockfile
-
-      - name: Install frontend dependencies (client)
-        run: bun install --frozen-lockfile
-        working-directory: client
-
-      - name: Build and upload release assets
-        uses: tauri-apps/tauri-action@v0.6.2
+      - name: Build desktop bundle
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           QXP_RUNTIME_CONFIG_URL: ${{ env.QXP_RUNTIME_CONFIG_URL }}
           QXP_SERVER_ORIGIN: ${{ env.QXP_SERVER_ORIGIN }}
           QXP_API_BASE_URL: ${{ env.QXP_API_BASE_URL }}
@@ -163,16 +163,30 @@ jobs:
           QXP_RELAY_ONLY: ${{ env.QXP_RELAY_ONLY }}
           QXP_CALLS_ENABLED: ${{ env.QXP_CALLS_ENABLED }}
           QXP_CALLS_UNAVAILABLE_REASON: ${{ env.QXP_CALLS_UNAVAILABLE_REASON }}
+        run: |
+          chmod +x scripts/build-tauri-ci.sh
+          scripts/build-tauri-ci.sh ${{ matrix.args }}
+
+      - name: Upload desktop artifacts
+        uses: actions/upload-artifact@v4
         with:
-          tagName: ${{ needs.prepare-release.outputs.tag_name }}
-          releaseName: QxChat v__VERSION__
-          releaseBody: |
-            Build automatique GitHub Actions pour la version __VERSION__.
-          releaseDraft: false
+          name: qxchat-${{ matrix.platform_name }}
+          if-no-files-found: error
+          path: ${{ matrix.release_files }}
+
+      - name: Upload desktop release assets
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.tag_name }}
+          name: QxChat v${{ needs.prepare-release.outputs.app_version }}
+          body: |
+            Build automatique GitHub Actions pour la version ${{ needs.prepare-release.outputs.app_version }}.
+          draft: false
           prerelease: false
-          generateReleaseNotes: true
-          args: ${{ matrix.args }}
-          tauriScript: bun run tauri
+          generate_release_notes: true
+          files: ${{ matrix.release_files }}
 
   build-android:
     name: Build Android APK
