@@ -243,7 +243,7 @@ jobs:
 
             bun install --no-save
             (cd client && bun install --no-save)
-            node ./client/scripts/sync-runtime-config.mjs --out ./client/dist/runtime-config.js
+            (cd client && node ./scripts/sync-runtime-config.mjs --out dist/runtime-config.js)
 
             echo "----- client/dist/runtime-config.js -----"
             cat client/dist/runtime-config.js
