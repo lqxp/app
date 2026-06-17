@@ -206,8 +206,6 @@ rustPlatform.buildRustPackage {
       --set GST_PLUGIN_PATH "${gstPluginPath}" \
       --set PIPEWIRE_MODULE_DIR "${pipewire}/lib/pipewire-0.3" \
       --set SPA_PLUGIN_DIR "${pipewireSpaPath}"
-
-    ln -s "$out/bin/qxchat" "$out/bin/qxchat"
   '';
 
   meta = {
