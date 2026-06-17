@@ -42,8 +42,15 @@
         ];
 
         androidComposition = pkgs.androidenv.composeAndroidPackages {
-          platformVersions = [ "35" ];
-          buildToolsVersions = [ "35.0.0" ];
+          platformVersions = [
+            "35"
+            "36"
+            "latest"
+          ];
+          buildToolsVersions = [
+            "35.0.0"
+            "latest"
+          ];
           abiVersions = [
             "armeabi-v7a"
             "arm64-v8a"
