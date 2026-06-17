@@ -57,8 +57,6 @@ EOF
 node client/dist/validate-runtime-config.cjs
 rm -f client/dist/validate-runtime-config.cjs
 
-rustup toolchain install "${RUSTUP_TOOLCHAIN:-stable}" --profile minimal
-rustup target add --toolchain "${RUSTUP_TOOLCHAIN:-stable}" $TAURI_ANDROID_RUST_TARGETS
 mkdir -p src-tauri/gen/android/app/src/main/res
 cp -R src-tauri/icons/android/. src-tauri/gen/android/app/src/main/res/
 bun tauri android build --apk --target aarch64

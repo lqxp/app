@@ -29,7 +29,11 @@
         fenixPkgs = fenix.packages.${system};
 
         rustToolchain = fenixPkgs.combine [
-          fenixPkgs.stable.toolchain
+          # Keep the shell lean for CI: cargo/rustc/std are enough here and
+          # avoid pulling extras like rustfmt/clippy/docs into the Nix closure.
+          fenixPkgs.stable.cargo
+          fenixPkgs.stable.rustc
+          fenixPkgs.stable.rust-std
 
           fenixPkgs.targets.aarch64-linux-android.stable.rust-std
           fenixPkgs.targets.armv7-linux-androideabi.stable.rust-std
@@ -38,15 +42,8 @@
         ];
 
         androidComposition = pkgs.androidenv.composeAndroidPackages {
-          platformVersions = [
-            "35"
-            "36"
-            "latest"
-          ];
-          buildToolsVersions = [
-            "35.0.0"
-            "latest"
-          ];
+          platformVersions = [ "35" ];
+          buildToolsVersions = [ "35.0.0" ];
           abiVersions = [
             "armeabi-v7a"
             "arm64-v8a"
