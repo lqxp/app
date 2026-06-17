@@ -56,7 +56,7 @@ let
       inherit pname version;
       src = frontendSrc;
       fetcherVersion = 3;
-      hash = "sha256-2sPuBQJmUo0Y0+WD5KLXhYAwa37a+zwmK9qugLEBH/8=";
+      hash = "sha256-BN27FRuSiw2pfWV6BCHNSwQm0kFeOE+HloQDPud57/o=";
     };
 
     buildPhase = ''
