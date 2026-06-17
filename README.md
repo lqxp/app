@@ -1,5 +1,7 @@
 # QXP Client - Tauri App
 
+Web Client: https://qxch.at/app
+
 Desktop client for the QXP messaging web app, built with Tauri v2 and TypeScript.
 
 ## Installation
