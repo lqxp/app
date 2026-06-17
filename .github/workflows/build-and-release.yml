@@ -242,7 +242,7 @@ jobs:
           QXP_RELAY_ONLY: ${{ env.QXP_RELAY_ONLY }}
           QXP_CALLS_ENABLED: ${{ env.QXP_CALLS_ENABLED }}
           QXP_CALLS_UNAVAILABLE_REASON: ${{ env.QXP_CALLS_UNAVAILABLE_REASON }}
-          EXPECTED_API_BASE_URL: https://qxp.kisakay.com
+          EXPECTED_API_BASE_URL: https://qxch.at
           APP_VERSION: ${{ needs.prepare-release.outputs.app_version }}
         run: |
           chmod +x scripts/build-android-ci.sh
