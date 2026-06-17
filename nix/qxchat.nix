@@ -2,7 +2,8 @@
   lib,
   rustPlatform,
   stdenvNoCC,
-  pnpm,
+  fetchPnpmDeps,
+  pnpmConfigHook,
   pkg-config,
   makeWrapper,
   wrapGAppsHook4,
@@ -48,13 +49,13 @@ let
 
     nativeBuildInputs = [
       nodejs
-      pnpm.configHook
+      pnpmConfigHook
     ];
 
-    pnpmDeps = pnpm.fetchDeps {
+    pnpmDeps = fetchPnpmDeps {
       inherit pname version;
       src = frontendSrc;
-      fetcherVersion = 1;
+      fetcherVersion = 3;
       hash = "sha256-2sPuBQJmUo0Y0+WD5KLXhYAwa37a+zwmK9qugLEBH/8=";
     };
 

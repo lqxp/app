@@ -62,7 +62,7 @@ jobs:
           commit-message: "chore(nix): update pnpm fetch hash [skip ci]"
           title: "chore(nix): update pnpm fetch hash"
           body: |
-            Automated update of the `pnpm.fetchDeps` hash in `nix/qxchat.nix`.
+            Automated update of the `fetchPnpmDeps` hash in `nix/qxchat.nix`.
             - Triggered by changes to `client/pnpm-lock.yaml` or manual dispatch
             - Hash extracted from Nix fixed-output derivation error (`got: sha256-...`)
           branch: "ci/update-pnpm-fetch-hash"
