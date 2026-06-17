@@ -25,7 +25,7 @@ case "$(uname -s)" in
     ;;
   *)
     export TMPDIR="${TMPDIR:-/tmp}"
-    export LQXP_RUSTUP_BIN_DIR="${TMPDIR}/lqxp-client-rustup-bin-${UID:-$(id -u)}"
+    export LQXP_RUSTUP_BIN_DIR="${TMPDIR}/qxchat-rustup-bin-${UID:-$(id -u)}"
     mkdir -p "$LQXP_RUSTUP_BIN_DIR"
 
     cat > "$LQXP_RUSTUP_BIN_DIR/cargo" <<'EOF'

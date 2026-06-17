@@ -37,7 +37,7 @@ command -v rustup >/dev/null 2>&1 || {
 
 export RUSTUP_TOOLCHAIN="${RUSTUP_TOOLCHAIN:-stable}"
 export TMPDIR="/tmp"
-export LQXP_RUSTUP_BIN_DIR="/tmp/lqxp-client-rustup-bin-${UID:-$(id -u)}"
+export LQXP_RUSTUP_BIN_DIR="/tmp/qxchat-rustup-bin-${UID:-$(id -u)}"
 mkdir -p "$LQXP_RUSTUP_BIN_DIR"
 
 cat > "$LQXP_RUSTUP_BIN_DIR/cargo" <<'EOF'
@@ -93,9 +93,9 @@ configure_android_release_signing() {
   is_release_build "$@" || return 0
 
   local keystore_properties="src-tauri/gen/android/keystore.properties"
-  local keystore_path="${ANDROID_KEYSTORE_PATH:-$HOME/.config/lqxp-client/lqxp-release.jks}"
+  local keystore_path="${ANDROID_KEYSTORE_PATH:-$HOME/.config/qxchat/qxchat-release.jks}"
   local keystore_password="${ANDROID_KEYSTORE_PASSWORD:-}"
-  local key_alias="${ANDROID_KEY_ALIAS:-lqxp}"
+  local key_alias="${ANDROID_KEY_ALIAS:-qxchat}"
   local key_password="${ANDROID_KEY_PASSWORD:-$keystore_password}"
 
   local has_explicit_signing_config=0

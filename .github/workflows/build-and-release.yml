@@ -318,7 +318,7 @@ jobs:
   #         }
 
   #         certificate_path="$RUNNER_TEMP/apple_certificate.p12"
-  #         profile_path="$RUNNER_TEMP/lqxp-client.mobileprovision"
+  #         profile_path="$RUNNER_TEMP/qxchat.mobileprovision"
   #         profile_plist="$RUNNER_TEMP/profile.plist"
   #         keychain_path="$RUNNER_TEMP/app-signing.keychain-db"
 
@@ -380,7 +380,7 @@ jobs:
   #     - name: Upload iOS artifacts
   #       uses: actions/upload-artifact@v4
   #       with:
-  #         name: lqxp-client-ios
+  #         name: qxchat-ios
   #         if-no-files-found: error
   #         path: src-tauri/gen/apple/build/arm64/*.ipa
 

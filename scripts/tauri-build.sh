@@ -26,7 +26,7 @@ if [[ "$(uname -s)" == "Linux" && ! -x /usr/bin/xdg-open && "${LQXP_APPIMAGE_FHS
   fi
   fhs_env="$(nix-build nix/appimage-shell.nix --no-out-link)"
   printf -v quoted_args "%q " "$@"
-  exec "$fhs_env/bin/lqxp-client-appimage-build-env" -c "scripts/tauri-build.sh ${quoted_args}"
+  exec "$fhs_env/bin/qxchat-appimage-build-env" -c "scripts/tauri-build.sh ${quoted_args}"
 fi
 
 if [[ "$(uname -s)" == "Linux" ]]; then

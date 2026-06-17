@@ -128,15 +128,15 @@ Create a new local signing password and `.env` file:
 
 ```bash
 ANDROID_SIGNING_PASSWORD="$(openssl rand -base64 48)"
-mkdir -p "$HOME/.config/lqxp-client"
+mkdir -p "$HOME/.config/qxchat"
 cat > .env <<EOF
 LQXP_ANDROID_CREATE_KEYSTORE=1
 LQXP_REWRITE_ANDROID_KEYSTORE_PROPERTIES=1
-ANDROID_KEYSTORE_PATH=$HOME/.config/lqxp-client/lqxp-release.jks
+ANDROID_KEYSTORE_PATH=$HOME/.config/qxchat/qxchat-release.jks
 ANDROID_KEYSTORE_PASSWORD='$ANDROID_SIGNING_PASSWORD'
 ANDROID_KEY_ALIAS=lqxp
 ANDROID_KEY_PASSWORD='$ANDROID_SIGNING_PASSWORD'
-ANDROID_KEY_DNAME='CN=LQXP Client, OU=LQXP, O=LQXP, L=Unknown, ST=Unknown, C=XX'
+ANDROID_KEY_DNAME='CN=QxChat, OU=QxChat, O=QxChat, L=Unknown, ST=Unknown, C=XX'
 EOF
 chmod 600 .env
 unset ANDROID_SIGNING_PASSWORD
@@ -151,7 +151,7 @@ bun run build:android -- --apk --target aarch64
 On the first release build, the script creates the keystore at:
 
 ```text
-~/.config/lqxp-client/lqxp-release.jks
+~/.config/qxchat/qxchat-release.jks
 ```
 
 and writes Gradle's generated signing configuration to:
@@ -165,7 +165,7 @@ The relevant variables are:
 ```properties
 LQXP_ANDROID_CREATE_KEYSTORE=1
 LQXP_REWRITE_ANDROID_KEYSTORE_PROPERTIES=1
-ANDROID_KEYSTORE_PATH=/absolute/path/to/lqxp-release.jks
+ANDROID_KEYSTORE_PATH=/absolute/path/to/qxchat-release.jks
 ANDROID_KEYSTORE_PASSWORD=change-me
 ANDROID_KEY_ALIAS=lqxp
 ANDROID_KEY_PASSWORD=change-me

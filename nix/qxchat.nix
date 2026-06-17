@@ -192,7 +192,7 @@ rustPlatform.buildRustPackage {
   postInstall = ''
     install -Dm644 src-tauri/icons/icon.png "$out/share/icons/hicolor/512x512/apps/qxchat.png"
 
-    wrapProgram "$out/bin/lqxp-client" \
+    wrapProgram "$out/bin/qxchat" \
       --set GST_REGISTRY_FORK "no" \
       --unset GST_PLUGIN_SCANNER \
       --unset GST_PLUGIN_SCANNER_1_0 \
@@ -207,7 +207,7 @@ rustPlatform.buildRustPackage {
       --set PIPEWIRE_MODULE_DIR "${pipewire}/lib/pipewire-0.3" \
       --set SPA_PLUGIN_DIR "${pipewireSpaPath}"
 
-    ln -s "$out/bin/lqxp-client" "$out/bin/qxchat"
+    ln -s "$out/bin/qxchat" "$out/bin/qxchat"
   '';
 
   meta = {

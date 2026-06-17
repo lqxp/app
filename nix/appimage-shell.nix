@@ -66,7 +66,7 @@ let
   pkgConfigPath = pkgs.lib.makeSearchPathOutput "dev" "lib/pkgconfig" allPackages;
 in
 (pkgs.buildFHSEnv {
-  name = "lqxp-client-appimage-build-env";
+  name = "qxchat-appimage-build-env";
 
   targetPkgs = _: allPackages;
 
