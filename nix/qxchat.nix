@@ -33,6 +33,7 @@
   libepoxy,
   wayland,
   nodejs,
+  pnpm,
 }:
 
 let
@@ -49,6 +50,7 @@ let
 
     nativeBuildInputs = [
       nodejs
+      pnpm
       pnpmConfigHook
     ];
 
