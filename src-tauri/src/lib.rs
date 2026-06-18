@@ -23,6 +23,16 @@ use webkit2gtk::{
     PermissionRequestExt, SettingsExt, UserMediaPermissionRequest, WebViewExt,
 };
 
+#[cfg(not(target_os = "android"))]
+fn hide_window(window: &tauri::Window) {
+    let _ = window.hide();
+}
+
+#[cfg(target_os = "android")]
+fn hide_window(_window: &tauri::Window) {
+    // Android n'a pas Window::hide()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -120,7 +130,7 @@ pub fn run() {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
 
-                let _ = window.hide();
+                hide_window(window);
             }
         })
         .run(tauri::generate_context!())
