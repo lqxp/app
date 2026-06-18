@@ -116,6 +116,15 @@ pub fn run() {
 
             Ok(())
         })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                // Empêche le process Tauri de mourir
+                api.prevent_close();
+
+                // Cache la fenêtre dans le tray
+                let _ = window.hide();
+            }
+        })
         .run(tauri::generate_context!())
         .expect("error while running QxChat");
 }
