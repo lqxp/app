@@ -58,6 +58,11 @@ let
       inherit pname version;
       src = frontendSrc;
       fetcherVersion = 3;
+
+      pnpmConfig = {
+        minimumReleaseAge = 0;
+      };
+
       hash = "sha256-BN27FRuSiw2pfWV6BCHNSwQm0kFeOE+HloQDPud57/o=";
     };
 
