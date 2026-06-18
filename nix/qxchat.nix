@@ -34,6 +34,7 @@
   wayland,
   nodejs,
   pnpm,
+  libayatana-appindicator-gtk3,
 }:
 
 let
@@ -117,6 +118,7 @@ let
       libepoxy
       wayland
       pipewire
+      libayatana-appindicator-gtk3
     ]
     ++ gstPlugins
   );
