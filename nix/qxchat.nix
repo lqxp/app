@@ -63,7 +63,7 @@ let
 
     buildPhase = ''
       runHook preBuild
-      pnpm install --offline --frozen-lockfile
+      pnpm install --offline --frozen-lockfile --force
       pnpm run build
       runHook postBuild
     '';
