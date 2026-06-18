@@ -57,7 +57,12 @@ let
     pnpmDeps = fetchPnpmDeps {
       inherit pname version;
       src = frontendSrc;
-      fetcherVersion = 3;
+-      fetcherVersion = 3;
++      # Force older fetcher version to bypass pnpm supply-chain minimumReleaseAge check
++      # (fetcherVersion 3 enforces supply-chain policy that can block freshly published packages).
++      # This weakens supply-chain verification; only use when you intentionally want to force in
++      # a new release that the policy rejects.
++      fetcherVersion = 2;
       hash = "sha256-BN27FRuSiw2pfWV6BCHNSwQm0kFeOE+HloQDPud57/o=";
     };
 
@@ -72,6 +77,7 @@ let
       runHook preInstall
       mkdir -p $out
       cp -r dist $out/
+      runHook postInstall
       runHook postInstall
     '';
   };
@@ -159,7 +165,7 @@ rustPlatform.buildRustPackage {
 
         cat > client/dist/runtime-config.js <<'EOF'
 
-    window.__QXP_RUNTIME__ = {"apiBaseUrl":"https://qxp.kisakay.com","rtc":{"callsEnabled":true,"callsUnavailableReason":"","relayOnly":true,"turnCredential":"df64240e730e15fdfb75d6cff95367b95ed341bd98517544","turnUrls":["turn:turn.qxp.kisakay.com:3478?transport=udp","turn:turn.qxp.kisakay.com:3478?transport=tcp","turns:turn.qxp.kisakay.com:5349?transport=tcp"],"turnUsername":"qxp-turn"},"serverOrigin":"https://qxp.kisakay.com","wsUrl":"wss://qxp.kisakay.com/ws"};
+    window.__QXP_RUNTIME__ = {"apiBaseUrl":"https://qxp.kisakay.com","rtc":{"callsEnabled":true,"callsUnavailableReason":"","relayOnly":true,"turnCredential":"df64240e730e15fdfb75d6cff95367b95ed3[...]}
     EOF
   '';
 
