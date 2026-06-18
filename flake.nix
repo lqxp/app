@@ -192,6 +192,8 @@
             export GST_PLUGIN_SYSTEM_PATH_1_0="${gstPluginPath}"
             export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules"
             export WEBKIT_DISABLE_DMABUF_RENDERER=1
+            export WEBKIT_DISABLE_COMPOSITING_MODE=1
+            export WEBKIT_DISABLE_DMABUF_RENDERER=1
 
             export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${
               pkgs.lib.makeLibraryPath [
