@@ -59,9 +59,10 @@ let
       src = frontendSrc;
       fetcherVersion = 3;
 
-      pnpmConfig = ''
-        minimum-release-age=0
-      '';
+      pnpmInstallFlags = [
+        "--config.minimum-release-age=0"
+        "--force"
+      ];
 
       hash = "sha256-BN27FRuSiw2pfWV6BCHNSwQm0kFeOE+HloQDPud57/o=";
     };
