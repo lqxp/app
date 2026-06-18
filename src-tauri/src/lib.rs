@@ -29,7 +29,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {
-            // Tray Linux
+            // Linux tray
             #[cfg(any(
                 target_os = "linux",
                 target_os = "dragonfly",
@@ -45,7 +45,7 @@ pub fn run() {
                 let menu = Menu::with_items(app, &[&show, &quit])?;
 
                 TrayIconBuilder::new()
-                    .icon(app.default_window_icon().unwrap().clone())
+                    .icon(app.default_window_icon().expect("missing app icon").clone())
                     .menu(&menu)
                     .on_menu_event(|app, event| match event.id.as_ref() {
                         "quit" => {
@@ -78,7 +78,7 @@ pub fn run() {
                     .build(app)?;
             }
 
-            // Webkit Linux permissions
+            // Linux WebKit permissions
             #[cfg(any(
                 target_os = "linux",
                 target_os = "dragonfly",
@@ -87,11 +87,11 @@ pub fn run() {
                 target_os = "openbsd"
             ))]
             {
-                let webview_window = app
+                let window = app
                     .get_webview_window("main")
                     .expect("main window not found");
 
-                webview_window.with_webview(|webview| {
+                window.with_webview(|webview| {
                     let webview = webview.inner();
 
                     if let Some(settings) = webview.settings() {
@@ -118,10 +118,8 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                // Empêche le process Tauri de mourir
                 api.prevent_close();
 
-                // Cache la fenêtre dans le tray
                 let _ = window.hide();
             }
         })
