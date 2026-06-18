@@ -121,6 +121,7 @@
               webkitgtk_4_1
               xdotool
               dbus
+              libayatana-appindicator
             ])
             ++ gstPlugins;
 
@@ -216,6 +217,7 @@
                 pkgs.gst_all_1.gst-plugins-bad
                 pkgs.gst_all_1.gst-plugins-ugly
                 pkgs.gst_all_1.gst-libav
+                pkgs.libayatana-appindicator
               ]
             }"
 
