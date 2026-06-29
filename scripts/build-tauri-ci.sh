@@ -53,6 +53,17 @@ EOF
 esac
 
 bun install --frozen-lockfile
-(cd client && bun install --frozen-lockfile)
+(
+  cd client
+
+  pnpm_lock_backup=""
+  if [[ -f pnpm-lock.yaml ]]; then
+    pnpm_lock_backup="pnpm-lock.yaml.ci-bak"
+    mv pnpm-lock.yaml "$pnpm_lock_backup"
+    trap 'mv "$pnpm_lock_backup" pnpm-lock.yaml' EXIT
+  fi
+
+  bun install --frozen-lockfile
+)
 
 bun run tauri build "$@"
