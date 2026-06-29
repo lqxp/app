@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PACKAGE_JSON = ROOT / "package.json"
 CARGO_TOML = ROOT / "src-tauri" / "Cargo.toml"
 TAURI_CONF = ROOT / "src-tauri" / "tauri.conf.json"
+QXCHAT_NIX = ROOT / "nix" / "qxchat.nix"
 SEMVER_RE = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 
 
@@ -106,6 +107,23 @@ def write_cargo_version(version: str) -> None:
     updated_content = content[:start] + updated_package_section + content[end:]
     CARGO_TOML.write_text(updated_content, encoding="utf-8")
 
+def write_qxchat_nix_version(version: str) -> None:
+    try:
+        content = QXCHAT_NIX.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        die(f"File not found: {QXCHAT_NIX}")
+
+    if not re.search(r'(?m)^\s*version\s*=\s*"[^"]+"\s*;', content):
+        die("version key not found in nix/qxchat.nix")
+
+    updated_content = re.sub(
+        r'(?m)^(\s*)version\s*=\s*"[^"]+"\s*;',
+        rf'\1version = "{version}";',
+        content,
+        count=1,
+    )
+    QXCHAT_NIX.write_text(updated_content, encoding="utf-8")
+
 
 def usage() -> None:
     print(paint("Usage:", Color.BOLD))
@@ -136,12 +154,14 @@ def main() -> None:
     write_package_version(new_version)
     write_cargo_version(new_version)
     write_tauri_conf_version(new_version)
+    write_qxchat_nix_version(new_version)
 
     print(paint(f"Version updated to {new_version}", Color.GREEN))
     print(paint("Updated files:", Color.BOLD))
     print(paint("  - package.json", Color.YELLOW))
     print(paint("  - src-tauri/Cargo.toml", Color.YELLOW))
     print(paint("  - src-tauri/tauri.conf.json", Color.YELLOW))
+    print(paint("  - nix/qxchat.nix", Color.YELLOW))
 
 
 if __name__ == "__main__":
