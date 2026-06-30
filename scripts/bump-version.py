@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PACKAGE_JSON = ROOT / "package.json"
+CLIENT_PACKAGE_JSON = ROOT / "client" / "package.json"
 CARGO_TOML = ROOT / "src-tauri" / "Cargo.toml"
 TAURI_CONF = ROOT / "src-tauri" / "tauri.conf.json"
 QXCHAT_NIX = ROOT / "nix" / "qxchat.nix"
@@ -64,22 +65,31 @@ def load_package_version() -> str:
     return version
 
 
-def write_package_version(version: str) -> None:
-    data = json.loads(PACKAGE_JSON.read_text(encoding="utf-8"))
+def write_json_version(path: Path, version: str) -> None:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        die(f"File not found: {path}")
+    except json.JSONDecodeError as exc:
+        die(f"Invalid JSON in {path}: {exc}")
+
     data["version"] = version
-    PACKAGE_JSON.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def write_package_version(version: str) -> None:
+    write_json_version(PACKAGE_JSON, version)
+
+
+def write_client_package_version(version: str) -> None:
+    if not CLIENT_PACKAGE_JSON.exists():
+        print(paint(f"Warning: {CLIENT_PACKAGE_JSON} not found, skipping", Color.YELLOW))
+        return
+    write_json_version(CLIENT_PACKAGE_JSON, version)
 
 
 def write_tauri_conf_version(version: str) -> None:
-    try:
-        data = json.loads(TAURI_CONF.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        die(f"File not found: {TAURI_CONF}")
-    except json.JSONDecodeError as exc:
-        die(f"Invalid JSON in {TAURI_CONF}: {exc}")
-
-    data["version"] = version
-    TAURI_CONF.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    write_json_version(TAURI_CONF, version)
 
 
 def write_cargo_version(version: str) -> None:
@@ -152,6 +162,7 @@ def main() -> None:
         sys.exit(1)
 
     write_package_version(new_version)
+    write_client_package_version(new_version)
     write_cargo_version(new_version)
     write_tauri_conf_version(new_version)
     write_qxchat_nix_version(new_version)
@@ -159,6 +170,8 @@ def main() -> None:
     print(paint(f"Version updated to {new_version}", Color.GREEN))
     print(paint("Updated files:", Color.BOLD))
     print(paint("  - package.json", Color.YELLOW))
+    if CLIENT_PACKAGE_JSON.exists():
+        print(paint("  - client/package.json", Color.YELLOW))
     print(paint("  - src-tauri/Cargo.toml", Color.YELLOW))
     print(paint("  - src-tauri/tauri.conf.json", Color.YELLOW))
     print(paint("  - nix/qxchat.nix", Color.YELLOW))

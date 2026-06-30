@@ -39,7 +39,7 @@
 
 let
   pname = "qxchat";
-  version = "1.6.0";
+  version = "1.7.0";
 
   frontendSrc = ../client;
 
