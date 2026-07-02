@@ -1,4 +1,7 @@
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
+use std::{env, process::Command};
+
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
@@ -237,6 +240,31 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+
+            let app_handle = app.clone();
+            tauri_plugin_dialog::DialogExt::dialog(app)
+                .message("LQXP Client is already running.\n\nDo you want to close the old instance and open the new one?")
+                .title("Instance Already Running")
+                .kind(tauri_plugin_dialog::MessageDialogKind::Warning)
+                .buttons(tauri_plugin_dialog::MessageDialogButtons::OkCancelCustom(
+                    "Open New Instance".into(),
+                    "Keep Old Instance".into(),
+                ))
+                .show(move |accepted| {
+                    if accepted {
+                        if let Ok(exe) = env::current_exe() {
+                            let _ = Command::new(exe).spawn();
+                        }
+
+                        app_handle.exit(0);
+                    }
+                });
+        }))
         .setup(|app| {
             #[cfg(not(any(target_os = "android", target_os = "ios")))]
             {
