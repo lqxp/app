@@ -210,7 +210,7 @@ def write_qxchat_nix_version(version: str) -> None:
     QXCHAT_NIX.write_text(updated_content, encoding="utf-8")
 
 
-def release_version(version: str, push: bool) -> None:
+def validate_release(version: str) -> bool:
     tag_name = f"v{version}"
     if tag_exists(ROOT, tag_name):
         die(f"Tag {tag_name} already exists in {ROOT}")
@@ -221,6 +221,10 @@ def release_version(version: str, push: bool) -> None:
     if CLIENT_PACKAGE_JSON.exists() and not client_is_git_repo:
         print(paint("Warning: client is not a git repository, web tag skipped", Color.YELLOW))
 
+    return client_is_git_repo
+
+
+def release_version(version: str, push: bool, client_is_git_repo: bool) -> None:
     if client_is_git_repo:
         commit_changes(CLIENT_DIR, ["package.json"], f"Release v{version}")
         create_version_tag(CLIENT_DIR, version, push)
@@ -252,6 +256,7 @@ def main() -> None:
         current_version = load_package_version()
         new_version = bump_version(current_version, cmd)
         should_release = True
+        client_is_git_repo = validate_release(new_version)
     elif cmd == "set":
         if len(sys.argv) != 3:
             usage()
@@ -259,6 +264,7 @@ def main() -> None:
         new_version = sys.argv[2]
         parse_semver(new_version)
         should_release = False
+        client_is_git_repo = False
     else:
         usage()
         sys.exit(1)
@@ -270,7 +276,7 @@ def main() -> None:
     write_qxchat_nix_version(new_version)
 
     if should_release:
-        release_version(new_version, push)
+        release_version(new_version, push, client_is_git_repo)
 
     print(paint(f"Version updated to {new_version}", Color.GREEN))
     print(paint("Updated files:", Color.BOLD))
