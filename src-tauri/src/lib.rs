@@ -89,12 +89,29 @@ fn asset_priority(name: &str) -> Option<u8> {
 
     #[cfg(target_os = "windows")]
     {
-        if name.ends_with(".msi") || name.ends_with(".exe") {
+        let is_current_arch = if cfg!(target_arch = "x86_64") {
+            (name.contains("x64") || name.contains("x86_64") || name.contains("amd64"))
+                && !name.contains("arm64")
+                && !name.contains("aarch64")
+        } else if cfg!(target_arch = "aarch64") {
+            name.contains("arm64") || name.contains("aarch64")
+        } else {
+            false
+        };
+
+        if name.ends_with(".msi") && is_current_arch {
             return Some(0);
         }
 
-        if name.ends_with(".zip") {
+        if name.ends_with(".msi") {
             return Some(1);
+        }
+        if name.ends_with(".exe") {
+            return Some(2);
+        }
+
+        if name.ends_with(".zip") {
+            return Some(3);
         }
     }
 
