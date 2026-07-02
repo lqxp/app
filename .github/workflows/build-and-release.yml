@@ -166,7 +166,7 @@ jobs:
         if: matrix.platform_name == 'Linux'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run update-npm-deps-hash.yml --ref ${{ github.ref_name }}
+        run: gh workflow run update-npm-deps-hash.yml --ref main
 
   build-android:
     name: Build Android APK
