@@ -251,6 +251,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           TAG_NAME: ${{ needs.prepare-release.outputs.tag_name }}
           APP_VERSION: ${{ needs.prepare-release.outputs.app_version }}
         run: |
