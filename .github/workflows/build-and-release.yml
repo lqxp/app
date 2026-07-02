@@ -156,20 +156,6 @@ jobs:
           if-no-files-found: error
           path: ${{ matrix.release_files }}
 
-      - name: Upload desktop release assets
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ needs.prepare-release.outputs.tag_name }}
-          name: QxChat v${{ needs.prepare-release.outputs.app_version }}
-          body: |
-            Build automatique GitHub Actions pour la version ${{ needs.prepare-release.outputs.app_version }}.
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-          files: ${{ matrix.release_files }}
-
       - name: Trigger Nix pnpm hash update
         if: matrix.platform_name == 'Linux'
         env:
@@ -244,16 +230,43 @@ jobs:
           path: |
             src-tauri/gen/android/app/build/outputs/apk/release/*.apk
 
-      - name: Upload Android release assets
-        uses: softprops/action-gh-release@v2
+  publish-release:
+    name: Publish Release
+    needs:
+      - prepare-release
+      - build-tauri
+      - build-android
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all release artifacts
+        uses: actions/download-artifact@v4
         with:
-          tag_name: ${{ needs.prepare-release.outputs.tag_name }}
-          name: QxChat v${{ needs.prepare-release.outputs.app_version }}
-          body: |
-            Build automatique GitHub Actions pour la version ${{ needs.prepare-release.outputs.app_version }}.
-          generate_release_notes: true
-          files: |
-            src-tauri/gen/android/app/build/outputs/apk/release/*.apk
+          pattern: qxchat-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish release with all assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ needs.prepare-release.outputs.tag_name }}
+          APP_VERSION: ${{ needs.prepare-release.outputs.app_version }}
+        run: |
+          set -euo pipefail
+
+          mapfile -d '' release_files < <(find release-assets -type f -print0 | sort -z)
+          if [ "${#release_files[@]}" -eq 0 ]; then
+            echo "::error::No release assets found."
+            exit 1
+          fi
+
+          gh release create "$TAG_NAME" "${release_files[@]}" \
+            --draft \
+            --title "QxChat v${APP_VERSION}" \
+            --notes "Build automatique GitHub Actions pour la version ${APP_VERSION}."
+          gh release edit "$TAG_NAME" --draft=false --latest
 
   # build-ios:
   #   name: Build iOS IPA
