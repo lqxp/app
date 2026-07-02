@@ -1,11 +1,6 @@
 name: Update pnpm fetch hash
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "client/pnpm-lock.yaml"
-      - "nix/qxchat.nix"
-      - ".github/workflows/update-npm-deps-hash.yml"
 jobs:
   update-hash:
     runs-on: ubuntu-latest
