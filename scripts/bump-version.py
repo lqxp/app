@@ -217,7 +217,8 @@ def validate_release(version: str) -> bool:
 
     client_is_git_repo = CLIENT_PACKAGE_JSON.exists() and is_git_repo(CLIENT_DIR)
     if client_is_git_repo and tag_exists(CLIENT_DIR, tag_name):
-        die(f"Tag {tag_name} already exists in {CLIENT_DIR}")
+        print(paint(f"Warning: tag {tag_name} already exists in {CLIENT_DIR}, skipping", Color.YELLOW))
+        client_is_git_repo = False
     if CLIENT_PACKAGE_JSON.exists() and not client_is_git_repo:
         print(paint("Warning: client is not a git repository, web tag skipped", Color.YELLOW))
 
