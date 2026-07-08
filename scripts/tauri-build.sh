@@ -15,6 +15,29 @@ load_dotenv() {
 
 load_dotenv
 
+build_target=""
+for arg in "$@"; do
+  if [[ "$arg" == --target=* ]]; then
+    build_target="${arg#--target=}"
+    break
+  fi
+done
+if [[ -z "$build_target" ]]; then
+  for ((i = 1; i <= $#; i++)); do
+    if [[ "${!i}" == "--target" ]]; then
+      next=$((i + 1))
+      if [[ $next -le $# ]]; then
+        build_target="${!next}"
+      fi
+      break
+    fi
+  done
+fi
+
+if [[ -n "$build_target" ]] && command -v rustup >/dev/null 2>&1; then
+  rustup target add "$build_target"
+fi
+
 if [[ "${LQXP_TAURI_BUILD_RUNNING:-}" == "1" ]]; then
   echo "Refusing to run scripts/tauri-build.sh from inside tauri build; check beforeBuildCommand." >&2
   exit 1
