@@ -201,10 +201,8 @@ rustPlatform.buildRustPackage {
     install -Dm644 src-tauri/icons/icon.png "$out/share/icons/hicolor/512x512/apps/qxchat.png"
 
     wrapProgram "$out/bin/qxchat" \
-      --set GST_REGISTRY_FORK "no" \
-      --unset GST_PLUGIN_SCANNER \
-      --unset GST_PLUGIN_SCANNER_1_0 \
-      --set GST_REGISTRY_1_0 "/tmp/qxchat-gst-registry.bin" \
+      --set WEBKIT_DISABLE_DMABUF_RENDERER "1" \
+      --set WEBKIT_DISABLE_COMPOSITING_MODE "1" \
       --set LD_LIBRARY_PATH "${runtimeLibPath}" \
       --set GIO_MODULE_DIR "${glib-networking}/lib/gio/modules" \
       --set GIO_EXTRA_MODULES "${glib-networking}/lib/gio/modules" \
