@@ -138,7 +138,8 @@ jobs:
             wget \
             file \
             curl \
-            libxdo-dev
+            libxdo-dev \
+            xdg-utils
 
       - name: Build desktop bundle
         shell: bash
