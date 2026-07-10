@@ -58,7 +58,7 @@ let
     pnpmDeps = fetchPnpmDeps {
       inherit pname version;
       src = frontendSrc;
-      fetcherVersion = 3;
+      fetcherVersion = 4;
 
       pnpmInstallFlags = [
         "--config.minimum-release-age=0"
