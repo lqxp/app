@@ -315,7 +315,7 @@ jobs:
           fi
 
           virustotal_url="https://www.virustotal.com/gui/file-analysis/${analysis_id}"
-          release_notes=$'legitimacy is supremacy.\n'"${virustotal_url}"
+          release_notes=$'Legitimacy is supremacy.\n'"${virustotal_url}"
 
           gh release create "$TAG_NAME" "${release_files[@]}" \
             --draft \
