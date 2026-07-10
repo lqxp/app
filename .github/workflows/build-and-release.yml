@@ -263,6 +263,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           TAG_NAME: ${{ needs.prepare-release.outputs.tag_name }}
           APP_VERSION: ${{ needs.prepare-release.outputs.app_version }}
+          VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
         run: |
           set -euo pipefail
 
@@ -272,10 +273,54 @@ jobs:
             exit 1
           fi
 
+          msi_x86=""
+          while IFS= read -r -d '' file; do
+            if [[ "$file" == *.msi && "$file" != *arm64* && "$file" != *aarch64* ]]; then
+              msi_x86="$file"
+              break
+            fi
+          done < <(find release-assets -type f -name '*.msi' -print0 | sort -z)
+
+          if [ -z "$msi_x86" ]; then
+            echo "::error::No MSI_x86 asset found for VirusTotal analysis."
+            exit 1
+          fi
+
+          if [ -z "${VIRUSTOTAL_API_KEY:-}" ]; then
+            echo "::error::Missing VIRUSTOTAL_API_KEY secret."
+            exit 1
+          fi
+
+          upload_url=$(curl --fail --silent --show-error \
+            --request GET \
+            --url https://www.virustotal.com/api/v3/files/upload_url \
+            --header "x-apikey: ${VIRUSTOTAL_API_KEY}" \
+            | jq -r '.data')
+
+          if [ -z "$upload_url" ] || [ "$upload_url" = "null" ]; then
+            echo "::error::VirusTotal upload URL was not returned."
+            exit 1
+          fi
+
+          analysis_id=$(curl --fail --silent --show-error \
+            --request POST \
+            --url "$upload_url" \
+            --header "x-apikey: ${VIRUSTOTAL_API_KEY}" \
+            --form "file=@${msi_x86}" \
+            | jq -r '.data.id')
+
+          if [ -z "$analysis_id" ] || [ "$analysis_id" = "null" ]; then
+            echo "::error::VirusTotal analysis ID was not returned."
+            exit 1
+          fi
+
+          virustotal_url="https://www.virustotal.com/gui/file-analysis/${analysis_id}"
+          release_notes=$'legitimacy is supremacy.\n'"${virustotal_url}"
+
           gh release create "$TAG_NAME" "${release_files[@]}" \
             --draft \
             --title "QxChat v${APP_VERSION}" \
-            --notes "Build automatique GitHub Actions pour la version ${APP_VERSION}."
+            --notes "$release_notes"
           gh release edit "$TAG_NAME" --draft=false --latest
 
   # build-ios:
