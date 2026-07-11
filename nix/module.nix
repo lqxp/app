@@ -7,14 +7,6 @@
 
 let
   cfg = config.programs.qxchat;
-  optionalPortal = name: lib.optional (lib.hasAttr name pkgs) pkgs.${name};
-  defaultPortalPackages =
-    [ pkgs.xdg-desktop-portal-gtk ]
-    ++ optionalPortal "xdg-desktop-portal-gnome"
-    ++ optionalPortal "xdg-desktop-portal-kde"
-    ++ optionalPortal "xdg-desktop-portal-wlr"
-    ++ optionalPortal "xdg-desktop-portal-hyprland"
-    ++ optionalPortal "xdg-desktop-portal-cosmic";
 in
 {
   options.programs.qxchat = {
@@ -27,18 +19,11 @@ in
       description = "Le paquet QxChat à installer.";
     };
 
-    portalPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = defaultPortalPackages;
-      defaultText = lib.literalExpression ''
-        [ pkgs.xdg-desktop-portal-gtk ]
-        ++ lib.optional (lib.hasAttr "xdg-desktop-portal-gnome" pkgs) pkgs.xdg-desktop-portal-gnome
-        ++ lib.optional (lib.hasAttr "xdg-desktop-portal-kde" pkgs) pkgs.xdg-desktop-portal-kde
-        ++ lib.optional (lib.hasAttr "xdg-desktop-portal-wlr" pkgs) pkgs.xdg-desktop-portal-wlr
-        ++ lib.optional (lib.hasAttr "xdg-desktop-portal-hyprland" pkgs) pkgs.xdg-desktop-portal-hyprland
-        ++ lib.optional (lib.hasAttr "xdg-desktop-portal-cosmic" pkgs) pkgs.xdg-desktop-portal-cosmic
-      '';
-      description = "Backends xdg-desktop-portal à utiliser pour la capture écran PipeWire.";
+    portalPackage = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.xdg-desktop-portal-gtk;
+      defaultText = lib.literalExpression "pkgs.xdg-desktop-portal-gtk";
+      description = "This package is required for screen capture.";
     };
   };
 
@@ -47,15 +32,7 @@ in
 
     xdg.portal = {
       enable = true;
-      extraPortals = cfg.portalPackages;
-      config = {
-        common.default = [ "gtk" ];
-        cosmic.default = [ "cosmic" "gtk" ];
-        gnome.default = [ "gnome" "gtk" ];
-        kde.default = [ "kde" "gtk" ];
-        hyprland.default = [ "hyprland" "gtk" ];
-        sway.default = [ "wlr" "gtk" ];
-      };
+      extraPortals = [ cfg.portalPackage ];
     };
   };
 }
