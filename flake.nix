@@ -77,6 +77,8 @@
           pkgs.gst_all_1.gst-plugins-bad
           pkgs.gst_all_1.gst-plugins-ugly
           pkgs.gst_all_1.gst-libav
+          pkgs.gst_all_1.gst-plugins-rs
+          pkgs.pipewire
         ];
 
         gstPluginPath = pkgs.lib.concatStringsSep ":" (map (pkg: "${pkg}/lib/gstreamer-1.0") gstPlugins);
