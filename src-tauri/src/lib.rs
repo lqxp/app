@@ -1,5 +1,5 @@
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
-use std::{env, process::Command};
+use std::env;
 
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use tauri::{
@@ -264,25 +264,6 @@ pub fn run() {
             let _ = window.show();
             let _ = window.set_focus();
         }
-
-        let app_handle = app.clone();
-        tauri_plugin_dialog::DialogExt::dialog(app)
-            .message("LQXP Client is already running.\n\nDo you want to close the old instance and open the new one?")
-            .title("Instance Already Running")
-            .kind(tauri_plugin_dialog::MessageDialogKind::Warning)
-            .buttons(tauri_plugin_dialog::MessageDialogButtons::OkCancelCustom(
-                "Open New Instance".into(),
-                "Keep Old Instance".into(),
-            ))
-            .show(move |accepted| {
-                if accepted {
-                    if let Ok(exe) = env::current_exe() {
-                        let _ = Command::new(exe).spawn();
-                    }
-
-                    app_handle.exit(0);
-                }
-            });
     }));
 
     builder
