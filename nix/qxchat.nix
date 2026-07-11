@@ -185,7 +185,6 @@ rustPlatform.buildRustPackage {
         chmod -R u+w client/dist
 
         printf '%s\n' '${runtimeConfigScript}' > client/dist/runtime-config.js
-        cp client/dist/runtime-config.js src-tauri/../client/dist/runtime-config.js
   '';
 
   buildInputs = [
