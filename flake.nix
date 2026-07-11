@@ -194,6 +194,9 @@
             # GTK / WebKit / GStreamer
             # -----------------------
             export GST_PLUGIN_SYSTEM_PATH_1_0="${gstPluginPath}"
+            export GST_PLUGIN_PATH_1_0="${gstPluginPath}"
+            export GST_PLUGIN_SYSTEM_PATH="${gstPluginPath}"
+            export GST_PLUGIN_PATH="${gstPluginPath}"
             export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules"
             export WEBKIT_DISABLE_DMABUF_RENDERER=1
             export WEBKIT_DISABLE_COMPOSITING_MODE=1
