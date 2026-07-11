@@ -41,6 +41,10 @@ let
   pname = "qxchat";
   version = "1.11.2";
 
+  webkitgtk = webkitgtk_4_1.override {
+    enableExperimental = true;
+  };
+
   frontendSrc = ../client;
 
   frontend = stdenvNoCC.mkDerivation {
@@ -71,6 +75,14 @@ let
     buildPhase = ''
       runHook preBuild
       pnpm install --offline --frozen-lockfile --force
+      QXP_SERVER_ORIGIN=https://qxch.at \
+      QXP_API_BASE_URL=https://qxch.at \
+      QXP_WS_URL=wss://qxch.at/ws \
+      QXP_CALLS_ENABLED=true \
+      QXP_RELAY_ONLY=true \
+      QXP_TURN_URLS='turn:turn.qxp.kisakay.com:3478?transport=udp,turn:turn.qxp.kisakay.com:3478?transport=tcp,turns:turn.qxp.kisakay.com:5349?transport=tcp' \
+      QXP_TURN_USERNAME=qxp-turn \
+      QXP_TURN_CREDENTIAL=df64240e730e15fdfb75d6cff95367b95ed341bd98517544 \
       pnpm run build:tauri
       runHook postBuild
     '';
@@ -97,7 +109,7 @@ let
   runtimeLibPath = lib.makeLibraryPath (
     [
       gtk3
-      webkitgtk_4_1
+      webkitgtk
       libsoup_3
       openssl
       glib
@@ -189,7 +201,7 @@ rustPlatform.buildRustPackage {
 
   buildInputs = [
     gtk3
-    webkitgtk_4_1
+    webkitgtk
     libsoup_3
     openssl
     glib

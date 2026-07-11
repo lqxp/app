@@ -81,6 +81,10 @@
 
         gstPluginPath = pkgs.lib.concatStringsSep ":" (map (pkg: "${pkg}/lib/gstreamer-1.0") gstPlugins);
 
+        webkitgtk = pkgs.webkitgtk_4_1.override {
+          enableExperimental = true;
+        };
+
       in
       {
         devShells.default = pkgs.mkShell {
@@ -118,7 +122,7 @@
               libsoup_3
               openssl
               pango
-              webkitgtk_4_1
+              webkitgtk
               xdotool
               dbus
               libayatana-appindicator
@@ -197,7 +201,7 @@
 
             export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${
               pkgs.lib.makeLibraryPath [
-                pkgs.webkitgtk_4_1
+                webkitgtk
 
                 pkgs.gtk3
                 pkgs.glib
