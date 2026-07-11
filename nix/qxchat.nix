@@ -90,7 +90,7 @@ let
     gst_all_1.gst-plugins-bad
     gst_all_1.gst-plugins-ugly
     gst_all_1.gst-libav
-    pipewire
+    gst_all_1.gst-plugin-pipewire
   ];
 
   gstPluginPath = lib.concatStringsSep ":" (map (pkg: "${pkg}/lib/gstreamer-1.0") gstPlugins);
@@ -122,6 +122,26 @@ let
     ]
     ++ gstPlugins
   );
+
+  runtimeConfigScript = ''
+    window.__QXP_RUNTIME__ = ${builtins.toJSON {
+      apiBaseUrl = "https://qxch.at";
+      rtc = {
+        callsEnabled = true;
+        callsUnavailableReason = "";
+        relayOnly = true;
+        turnCredential = "df64240e730e15fdfb75d6cff95367b95ed341bd98517544";
+        turnUrls = [
+          "turn:turn.qxp.kisakay.com:3478?transport=udp"
+          "turn:turn.qxp.kisakay.com:3478?transport=tcp"
+          "turns:turn.qxp.kisakay.com:5349?transport=tcp"
+        ];
+        turnUsername = "qxp-turn";
+      };
+      serverOrigin = "https://qxch.at";
+      wsUrl = "wss://qxch.at/ws";
+    }};
+  '';
 
   desktopItem = makeDesktopItem {
     name = "qxchat";
@@ -165,10 +185,8 @@ rustPlatform.buildRustPackage {
         cp -r ${frontend}/dist client/dist
         chmod -R u+w client/dist
 
-        cat > client/dist/runtime-config.js <<'EOF'
-
-    window.__QXP_RUNTIME__ = {"apiBaseUrl":"https://qxch.at","rtc":{"callsEnabled":true,"callsUnavailableReason":"","relayOnly":true,"turnCredential":"df64240e730e15fdfb75d6cff95367b95ed341bd98517544","turnUrls":["turn:turn.qxp.kisakay.com:3478?transport=udp","turn:turn.qxp.kisakay.com:3478?transport=tcp","turns:turn.qxp.kisakay.com:5349?transport=tcp"],"turnUsername":"qxp-turn"},"serverOrigin":"https://qxch.at","wsUrl":"wss://qxch.at/ws"};
-    EOF
+        printf '%s\n' '${runtimeConfigScript}' > client/dist/runtime-config.js
+        cp client/dist/runtime-config.js src-tauri/../client/dist/runtime-config.js
   '';
 
   buildInputs = [
