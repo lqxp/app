@@ -137,7 +137,7 @@ let
   );
 
   desktopItem = makeDesktopItem {
-    name = "qxchat";
+    name = "com.qxp.client";
     desktopName = "QxChat";
     exec = "qxchat";
     terminal = false;
@@ -146,6 +146,9 @@ let
       "Chat"
     ];
     icon = "qxchat";
+    extraConfig = {
+      StartupWMClass = "com.qxp.client";
+    };
   };
 in
 rustPlatform.buildRustPackage {
@@ -210,6 +213,7 @@ rustPlatform.buildRustPackage {
     install -Dm644 src-tauri/icons/icon.png "$out/share/icons/hicolor/512x512/apps/qxchat.png"
 
     wrapProgram "$out/bin/qxchat" \
+      --set G_APPLICATION_ID "com.qxp.client" \
       --set WEBKIT_DISABLE_DMABUF_RENDERER "1" \
       --set WEBKIT_DISABLE_COMPOSITING_MODE "1" \
       --set LD_LIBRARY_PATH "${runtimeLibPath}" \
