@@ -18,6 +18,13 @@ in
       defaultText = lib.literalExpression "pkgs.qxchat";
       description = "Le paquet QxChat à installer.";
     };
+
+    portalPackage = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.xdg-desktop-portal-gtk;
+      defaultText = lib.literalExpression "pkgs.xdg-desktop-portal-gtk";
+      description = "This package is required for screen capture.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -25,7 +32,7 @@ in
 
     xdg.portal = {
       enable = true;
-      extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+      extraPortals = [ cfg.portalPackage ];
     };
   };
 }
