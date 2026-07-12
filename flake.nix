@@ -41,6 +41,13 @@
           fenixPkgs.targets.x86_64-linux-android.stable.rust-std
         ];
 
+        windowsRustToolchain = fenixPkgs.combine [
+          fenixPkgs.stable.cargo
+          fenixPkgs.stable.rustc
+          fenixPkgs.stable.rust-std
+          fenixPkgs.targets.x86_64-pc-windows-gnu.stable.rust-std
+        ];
+
         androidComposition = pkgs.androidenv.composeAndroidPackages {
           platformVersions = [
             "35"
@@ -89,6 +96,35 @@
 
       in
       {
+        devShells.windows = pkgs.mkShell {
+          nativeBuildInputs = with pkgs; [
+            windowsRustToolchain
+            cargo-tauri
+            bun
+            pkg-config
+            pkgsCross.mingwW64.stdenv.cc
+            nsis
+          ];
+
+          depsTargetTarget = [
+            pkgs.pkgsCross.mingwW64.windows.pthreads
+          ];
+
+          shellHook = ''
+            export CARGO_BUILD_TARGET=x86_64-pc-windows-gnu
+            export CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc
+            export CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc
+            export CXX_x86_64_pc_windows_gnu=x86_64-w64-mingw32-g++
+            export AR_x86_64_pc_windows_gnu=x86_64-w64-mingw32-ar
+            export RANLIB_x86_64_pc_windows_gnu=x86_64-w64-mingw32-ranlib
+            mingw_lib="${pkgs.pkgsCross.mingwW64.stdenv.cc.cc}/x86_64-w64-mingw32/lib"
+            pthread_lib="${pkgs.pkgsCross.mingwW64.windows.pthreads}/lib"
+            export LIBRARY_PATH="$pthread_lib:$mingw_lib:''${LIBRARY_PATH:-}"
+            export RUSTFLAGS="-L native=$pthread_lib -L native=$mingw_lib ''${RUSTFLAGS:-}"
+            echo "✔ Tauri Windows build environment ready"
+          '';
+        };
+
         devShells.default = pkgs.mkShell {
 
           nativeBuildInputs = with pkgs; [
