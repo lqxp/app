@@ -59,6 +59,7 @@ let
     xdotool
     libx11
     libxcb
+    libayatana-appindicator
     zlib
   ];
   allPackages = basePackages ++ gstTools ++ gstPlugins;
@@ -75,6 +76,7 @@ in
     export GST_PLUGIN_SYSTEM_PATH_1_0="${gstPluginPath}"
     export LD_LIBRARY_PATH="/usr/lib:/lib:${libraryPath}:''${LD_LIBRARY_PATH:-}"
     export LIBRARY_PATH="${libraryPath}:''${LIBRARY_PATH:-}"
+    export TRAY_LIBRARY_PATH="${pkgs.libayatana-appindicator}/lib/libayatana-appindicator3.so.1"
     export PATH="/usr/local/bin:''${PATH:-}"
     export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:${pkgConfigPath}:''${PKG_CONFIG_PATH:-}"
     export WEBKIT_DISABLE_DMABUF_RENDERER=1
@@ -93,6 +95,35 @@ in
       > "$out/usr/local/lib/pkgconfig/gio-2.0.pc"
 
     mkdir -p "$out/usr/local/bin"
+    cat > "$out/usr/local/bin/pkg-config" <<'EOF'
+#!/usr/bin/env bash
+set -e
+
+package="''${@: -1}"
+case "$package" in
+  ayatana-appindicator3-0.1|appindicator3-0.1)
+    case " $* " in
+      *" --libs-only-L "*)
+        echo "-L${pkgs.libayatana-appindicator}/lib"
+        ;;
+      *" --libs-only-l "*)
+        echo "-layatana-appindicator3"
+        ;;
+      *" --libs "*)
+        echo "-L${pkgs.libayatana-appindicator}/lib -layatana-appindicator3"
+        ;;
+      *)
+        exec /usr/bin/pkg-config "$@"
+        ;;
+    esac
+    ;;
+  *)
+    exec /usr/bin/pkg-config "$@"
+    ;;
+esac
+EOF
+    chmod +x "$out/usr/local/bin/pkg-config"
+
     cat > "$out/usr/local/bin/sed" <<'EOF'
 #!/usr/bin/env bash
 set -e
