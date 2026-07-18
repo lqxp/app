@@ -103,6 +103,7 @@
             bun
             pkg-config
             pkgsCross.mingwW64.stdenv.cc
+            libayatana-appindicator
             nsis
           ];
 
@@ -113,6 +114,8 @@
           shellHook = ''
             export CARGO_BUILD_TARGET=x86_64-pc-windows-gnu
             export CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc
+            export TAURI_LINUX_AYATANA_APPINDICATOR=true
+            export TRAY_LIBRARY_PATH="${pkgs.libayatana-appindicator}/lib/libayatana-appindicator3.so.1"
             export CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc
             export CXX_x86_64_pc_windows_gnu=x86_64-w64-mingw32-g++
             export AR_x86_64_pc_windows_gnu=x86_64-w64-mingw32-ar
