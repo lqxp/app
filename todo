@@ -1,0 +1,25 @@
+changing the nixos flakes phislophia
+Instead of buildings the tauri desktop application for update.
+Use the CI/CD automation releases assets for injecting instead the new binary to the NixOS ld environnement
+That will help the updates to get faster instead of compiling it , just download the new binary.
+So i have to update the CIDCD yaml
+to make the new release distribute and generate the tar gz xt files into the release assets to after serving it into the nix flakes .
+
+
+Fixing an UI bug into the phone mobile applicaiton.
+The search bar and the plus icon button it's outside of the current plain body Fields. Actually their layout are into the notification bar into the android context.
+
+I have to code review the last 2days commits to check what this issue came from.
+- review the actual tactile gesture for exiting the settings panel.
+Actually you can do a cross to top slide with your thumb to open settings page. A new tactil cross slide to the top to close this menue will be cool.
+- Actually when you are on the profil page for editing an information such a bio, or the nickname. The actual division to told you that you have to save this changes. it's actually over the settings panel itself. So if you open an another page, you will ecounter an issue like that the dialog remain visible. fix this UI bug with the correct css z-index properties.
+
+- The tor connectivity map is only loading when the user press "Refresh relays" and accepting the modal
+    - This bearvhior is a bug, the tor map doesn't need to loaded by an user prompting .
+- Logout button in Settings doesn't need confirmation
+    Instead of directely disconnecting the user after the button targeted, showing a modal that show a
+    confirmation for Logout
+- In a specific hardware configuration: QxChat desktop on computer with a touchpad screen:
+    pinch to zoom seem to work in some place (settings like tor map)
+    making the QxChat client with a buggy scale that need to be close to reset.
+- Integrate the CTRL + (+), CTRL + (-), CTRL + (0), respectly to adding,reduce,reset the window scale. Like web browser.
