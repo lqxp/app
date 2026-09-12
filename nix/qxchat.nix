@@ -52,8 +52,8 @@
   # without editing this file (see QxChat_<version>_flake.nix assets).
   version ? "1.20.4",
   binaryHashes ? {
-    x86_64-linux = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-    aarch64-linux = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+    x86_64-linux = "sha256-dH5knCO1DnXiynvBS6fr5zeCPgJY6l2uYkGgrKfZjgc=";
+    aarch64-linux = "sha256-0AHL9GXtKF0L/DY32O8uQfR7JQQ8Ah3bCru3HO33ZlQ=";
   },
 }:
 

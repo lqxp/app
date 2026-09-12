@@ -312,6 +312,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      nix_hash_x86: ${{ steps.nix-flake.outputs.hash_x86 }}
+      nix_hash_arm: ${{ steps.nix-flake.outputs.hash_arm }}
     steps:
       - name: Download all release artifacts
         uses: actions/download-artifact@v4
@@ -321,6 +324,7 @@ jobs:
           merge-multiple: true
 
       - name: Generate Nix flake (prebuilt binaries)
+        id: nix-flake
         shell: bash
         env:
           APP_VERSION: ${{ needs.prepare-release.outputs.app_version }}
@@ -350,6 +354,8 @@ jobs:
           HASH_ARM="$(sri "$ARM_TARBALL")"
           echo "x86_64 hash: $HASH_X86"
           echo "aarch64 hash: $HASH_ARM"
+          echo "hash_x86=$HASH_X86" >> "$GITHUB_OUTPUT"
+          echo "hash_arm=$HASH_ARM" >> "$GITHUB_OUTPUT"
           cat > "release-assets/QxChat_${APP_VERSION}_flake.nix" << FLAKE
           # QxChat ${APP_VERSION} — NixOS flake (prebuilt binaries, no compilation)
           # Fetches the CI-built Tauri binaries from release assets and injects
@@ -590,6 +596,89 @@ jobs:
             --title "QxChat v${APP_VERSION}" \
             --notes "$release_notes"
           gh release edit "$TAG_NAME" --draft=false --latest
+
+  update-nix-hashes:
+    name: Update Nix binary hashes
+    needs:
+      - prepare-release
+      - publish-release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Patch nix/qxchat.nix defaults
+        shell: bash
+        env:
+          APP_VERSION: ${{ needs.prepare-release.outputs.app_version }}
+          HASH_X86: ${{ needs.publish-release.outputs.nix_hash_x86 }}
+          HASH_ARM: ${{ needs.publish-release.outputs.nix_hash_arm }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HASH_X86:-}" ] || [ -z "${HASH_ARM:-}" ]; then
+            echo "::error::Missing binary hashes from publish-release outputs."
+            exit 1
+          fi
+          python3 - "$APP_VERSION" "$HASH_X86" "$HASH_ARM" <<'EOF'
+          import re, sys
+          version, hx, ha = sys.argv[1], sys.argv[2], sys.argv[3]
+          path = "nix/qxchat.nix"
+          src = open(path).read()
+          orig = src
+          # Bump the default version so the fetch URL tracks the release.
+          src = re.sub(r'version \? "[^"]*"', f'version ? "{version}"', src, count=1)
+          # Replace both arch hashes (placeholder or stale) with the
+          # just-published SRI hashes.
+          src = re.sub(r'x86_64-linux = "sha256-[^"]*"',
+                       f'x86_64-linux = "{hx}"', src, count=1)
+          src = re.sub(r'aarch64-linux = "sha256-[^"]*"',
+                       f'aarch64-linux = "{ha}"', src, count=1)
+          if src == orig:
+              print("nix/qxchat.nix already current, nothing to do.")
+          else:
+              open(path, "w").write(src)
+              print(f"nix/qxchat.nix updated to v{version}.")
+          EOF
+          git diff -- nix/qxchat.nix || true
+
+      - name: Create Pull Request
+        id: create-pr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.NIXOS_BUILD_USER_PAT_TOKEN != '' && secrets.NIXOS_BUILD_USER_PAT_TOKEN || github.token }}
+          commit-message: "chore(nix): update prebuilt binary hashes to v${{ needs.prepare-release.outputs.app_version }}"
+          title: "chore(nix): update prebuilt binary hashes to v${{ needs.prepare-release.outputs.app_version }}"
+          body: |
+            Automated update of the default `version` + `binaryHashes` in `nix/qxchat.nix`.
+            - Hashes are the SRI of the prebuilt Linux tarballs published in this release (same values as `QxChat_<version>_flake.nix`).
+            - This keeps `qxchat-src` consumers (e.g. NixOS overlays calling `nix/qxchat.nix` with defaults) working without manual hash edits.
+          branch: "ci/update-nix-binary-hashes-v${{ needs.prepare-release.outputs.app_version }}"
+          delete-branch: true
+          labels: |
+            ci
+            nix
+          add-paths: |
+            nix/qxchat.nix
+
+      - name: Auto-merge PR
+        if: steps.create-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.NIXOS_BUILD_USER_PAT_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "NIXOS_BUILD_USER_PAT_TOKEN secret is not set — skipping auto-merge"
+            exit 0
+          fi
+          gh pr merge ${{ steps.create-pr.outputs.pull-request-number }} \
+            --squash \
+            --admin \
+            --delete-branch
 
   build-ios:
     name: Build iOS (unsigned)
