@@ -57,6 +57,9 @@ apple-metal = "=0.8.7"
 # mobile WebViews expose no per-app proxy and Arti's default native-tls backend
 # does not cross-compile to Android/iOS, so gate the whole set out there.
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+# Discord Rich Presence over the local Discord IPC socket (named pipes on
+# Windows, Unix sockets on macOS/Linux). MIT-licensed maintained fork.
+discord-rich-presence = "1"
 arti-client = { version = "0.22", features = ["experimental-api", "geoip"] }
 fast-socks5 = "0.9"
 tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time", "sync", "macros"] }

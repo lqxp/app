@@ -20,6 +20,11 @@ pub mod tor;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 mod screen_audio;
 
+/// Discord Rich Presence is desktop-only like Tor/screen-audio: mobile
+/// targets have no Discord IPC socket to talk to.
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+mod discord_rpc;
+
 #[cfg(any(
     target_os = "linux",
     target_os = "dragonfly",
@@ -64,6 +69,7 @@ pub fn run() {
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     let builder = builder
         .plugin(screen_audio::init())
+        .plugin(discord_rpc::init())
         .plugin(tor::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
