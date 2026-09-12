@@ -328,15 +328,21 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          X86_TARBALL="release-assets/QxChat_${APP_VERSION}_linux-x86_64.tar.gz"
-          ARM_TARBALL="release-assets/QxChat_${APP_VERSION}_linux-aarch64.tar.gz"
-          for f in "$X86_TARBALL" "$ARM_TARBALL"; do
-            if [ ! -f "$f" ]; then
-              echo "::error::Missing Nix tarball $f (Linux binary packaging step failed?)"
-              ls -la release-assets/ || true
-              exit 1
-            fi
-          done
+          # Artifacts are downloaded with merge-multiple:true, which preserves
+          # each artifact's internal layout (e.g. release-nix/*.tar.gz lands
+          # under release-assets/release-nix/, not the root). Search recursively.
+          X86_TARBALL="$(find release-assets -name "QxChat_${APP_VERSION}_linux-x86_64.tar.gz" -type f -print -quit)"
+          ARM_TARBALL="$(find release-assets -name "QxChat_${APP_VERSION}_linux-aarch64.tar.gz" -type f -print -quit)"
+          if [ -z "${X86_TARBALL:-}" ]; then
+            echo "::error::Missing Nix tarball QxChat_${APP_VERSION}_linux-x86_64.tar.gz (Linux binary packaging step failed?)"
+            find release-assets -type f | sort || true
+            exit 1
+          fi
+          if [ -z "${ARM_TARBALL:-}" ]; then
+            echo "::error::Missing Nix tarball QxChat_${APP_VERSION}_linux-aarch64.tar.gz (Linux binary packaging step failed?)"
+            find release-assets -type f | sort || true
+            exit 1
+          fi
           sri() {
             python3 -c "import hashlib,base64,sys; print('sha256-' + base64.b64encode(hashlib.sha256(open(sys.argv[1],'rb').read()).digest()).decode())" "$1"
           }
