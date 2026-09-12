@@ -297,12 +297,12 @@ def write_qxchat_nix_version(version: str) -> None:
     except FileNotFoundError:
         die(f"File not found: {QXCHAT_NIX}")
 
-    if not re.search(r'(?m)^\s*version\s*=\s*"[^"]+"\s*;', content):
+    if not re.search(r'(?m)^\s*version\s*(?:\?|=)\s*"[^"]+"\s*[;,]', content):
         die("version key not found in nix/qxchat.nix")
 
     updated_content = re.sub(
-        r'(?m)^(\s*)version\s*=\s*"[^"]+"\s*;',
-        rf'\1version = "{version}";',
+        r'(?m)^(\s*version\s*(?:\?|=)\s*)"[^"]+"(\s*[;,])',
+        rf'\1"{version}"\2',
         content,
         count=1,
     )
