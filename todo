@@ -14,8 +14,6 @@ I have to code review the last 2days commits to check what this issue came from.
 Actually you can do a cross to top slide with your thumb to open settings page. A new tactil cross slide to the top to close this menue will be cool.
 - Actually when you are on the profil page for editing an information such a bio, or the nickname. The actual division to told you that you have to save this changes. it's actually over the settings panel itself. So if you open an another page, you will ecounter an issue like that the dialog remain visible. fix this UI bug with the correct css z-index properties.
 
-- The tor connectivity map is only loading when the user press "Refresh relays" and accepting the modal
-    - This bearvhior is a bug, the tor map doesn't need to loaded by an user prompting .
 - In a specific hardware configuration: QxChat desktop on computer with a touchpad screen:
     pinch to zoom seem to work in some place (settings like tor map)
     making the QxChat client with a buggy scale that need to be close to reset.
