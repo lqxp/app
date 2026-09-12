@@ -1,11 +1,3 @@
-changing the nixos flakes phislophia
-Instead of buildings the tauri desktop application for update.
-Use the CI/CD automation releases assets for injecting instead the new binary to the NixOS ld environnement
-That will help the updates to get faster instead of compiling it , just download the new binary.
-So i have to update the CIDCD yaml
-to make the new release distribute and generate the tar gz xt files into the release assets to after serving it into the nix flakes .
-
-
 Fixing an UI bug into the phone mobile applicaiton.
 The search bar and the plus icon button it's outside of the current plain body Fields. Actually their layout are into the notification bar into the android context.
 
