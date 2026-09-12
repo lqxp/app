@@ -166,6 +166,16 @@ jobs:
             libxdo-dev \
             xdg-utils
 
+      - name: Patch apple-metal for Xcode < 26 (macOS only)
+        if: startsWith(matrix.platform_name, 'macOS')
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Populate the cargo registry cache so the patch script can find it.
+          cargo fetch --manifest-path src-tauri/Cargo.toml
+          chmod +x scripts/patch-apple-metal-xcode.sh
+          scripts/patch-apple-metal-xcode.sh
+
       - name: Build desktop bundle
         shell: bash
         env:

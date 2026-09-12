@@ -47,7 +47,11 @@ webkit2gtk = { version = "2.0.2", features = ["v2_32"] }
 cpal = "0.15"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-screencapturekit = { version = "10", features = ["macos_13_0"] }
+screencapturekit = { version = "8", features = ["macos_13_0"] }
+# Pin apple-metal: 0.8.8/0.9.x still ship the same unguarded macOS 26 Swift
+# block (fixed at build time by scripts/patch-apple-metal-xcode.sh), and 0.9.x
+# additionally makes AudioBuffer fields private (breaks screen_audio/macos.rs).
+apple-metal = "=0.8.7"
 
 # Tor connectivity (embedded client + SOCKS5 plumbing) is desktop-only. The
 # mobile WebViews expose no per-app proxy and Arti's default native-tls backend
