@@ -1,15 +1,29 @@
+# QxChat — NixOS binary wrapper (no source build).
+#
+# Philosophy: CI builds Tauri once per release and publishes
+#   QxChat_<version>_linux-x86_64.tar.gz
+#   QxChat_<version>_linux-aarch64.tar.gz
+# as GitHub release assets. This derivation just fetches the matching
+# tarball and injects it into a NixOS `ld` environment (patchelf + wrapProgram),
+# so updates are a download instead of a full Rust/WebKit rebuild.
+#
+# Tarball layout (produced by .github/workflows/build-and-release.yml):
+#   qxchat-linux-<arch>/qxchat      (Tauri binary, frontend embedded)
+#   qxchat-linux-<arch>/icon.png    (optional app icon)
+#
+# To update to a new release:
+#   1. bump `version` below,
+#   2. run `nix-prefetch-url <tarball-url>` for each arch and paste the
+#      resulting `sha256-...` SRI hashes into `binaryHashes`.
 {
   lib,
-  rustPlatform,
-  stdenvNoCC,
-  fetchPnpmDeps,
-  pnpmConfigHook,
-  pkg-config,
+  stdenv,
+  fetchurl,
+  autoPatchelfHook,
   makeWrapper,
   wrapGAppsHook4,
   copyDesktopItems,
   makeDesktopItem,
-  gobject-introspection,
   glib-networking,
   gtk3,
   webkitgtk_4_1,
@@ -32,94 +46,37 @@
   mesa,
   libepoxy,
   wayland,
-  nodejs,
-  pnpm,
   libayatana-appindicator,
   alsa-lib,
+  # Overridable so a release flake can pin an exact version + hashes
+  # without editing this file (see QxChat_<version>_flake.nix assets).
+  version ? "1.20.3",
+  binaryHashes ? {
+    x86_64-linux = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+    aarch64-linux = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+  },
 }:
 
 let
   pname = "qxchat";
-  version = "1.20.3";
+
+  arch =
+    {
+      x86_64-linux = "x86_64";
+      aarch64-linux = "aarch64";
+    }
+    .${stdenv.hostPlatform.system}
+      or (throw "qxchat: unsupported system ${stdenv.hostPlatform.system} (only x86_64-linux and aarch64-linux have prebuilt binaries)");
+
+  src = fetchurl {
+    url = "https://github.com/lqxp/app/releases/download/v${version}/QxChat_${version}_linux-${arch}.tar.gz";
+    hash =
+      binaryHashes.${stdenv.hostPlatform.system}
+        or (throw "qxchat: missing binary hash for ${stdenv.hostPlatform.system}");
+  };
 
   webkitgtk = webkitgtk_4_1.override {
     enableExperimental = true;
-  };
-
-  frontendSrc = ../client;
-
-  frontend = stdenvNoCC.mkDerivation {
-    pname = "${pname}-frontend";
-    inherit version;
-
-    src = frontendSrc;
-
-    nativeBuildInputs = [
-      nodejs
-      pnpm
-      pnpmConfigHook
-    ];
-
-    pnpmDeps = fetchPnpmDeps {
-      inherit pname version;
-      src = frontendSrc;
-      fetcherVersion = 4;
-
-      pnpmInstallFlags = [
-        "--config.minimum-release-age=0"
-        "--force"
-      ];
-
-      hash = "sha256-fwhxkScpEdXX+Z0Ws/Tq3C2bs6dLeXecXk+WWx6f7n4=";
-    };
-
-    buildPhase = ''
-      runHook preBuild
-      pnpm install --offline --frozen-lockfile --force
-
-      mkdir -p ../files
-      cat > ../files/config.custom.toml << 'TOML_EOF'
-      [rtc]
-      relayOnly = true
-      defaultTurnServer = "google-stun"
-
-      [[rtc.servers]]
-      id = "qxp-turn"
-      label = "QXP Server"
-      hint = "Self-hosted relay on our infrastructure — may be unstable under load. No IP exposed, everything goes through our relay."
-      turnUrls = [
-          "turn:relay-01.qxch.at:3478?transport=udp",
-          "turn:relay-01.qxch.at:3478?transport=tcp",
-          "turns:relay-01.qxch.at:5349?transport=tcp",
-      ]
-      turnUsername = "qxp-turn"
-      turnCredential = "ee74bf0f9bf21e74d98f2d85176c9b5cb85ffde977ec80e8"
-
-      [[rtc.servers]]
-      id = "google-stun"
-      label = "Google STUN"
-      hint = "Google public STUN — very stable and fast, but ⚠️ your IPs are exposed (no anonymous relay). Only useful on local networks or for testing."
-      turnUrls = [
-          "stun:stun.l.google.com:19302",
-          "stun:stun1.l.google.com:19302",
-      ]
-      TOML_EOF
-
-      QXP_SERVER_ORIGIN=https://qxch.at \
-      QXP_API_BASE_URL=https://qxch.at \
-      QXP_WS_URL=wss://qxch.at/ws \
-      QXP_CALLS_ENABLED=true \
-      QXP_RELAY_ONLY=true \
-      pnpm run build:tauri
-      runHook postBuild
-    '';
-
-    installPhase = ''
-      runHook preInstall
-      mkdir -p $out
-      cp -r dist $out/
-      runHook postInstall
-    '';
   };
 
   gstPlugins = [
@@ -179,37 +136,17 @@ let
     };
   };
 in
-rustPlatform.buildRustPackage {
-  inherit pname version;
+stdenv.mkDerivation {
+  inherit pname version src;
 
-  # Keep client/dist in the source tree (it is gitignored but required by Tauri at build/runtime).
-  src = ../.;
-  cargoRoot = "src-tauri";
-  buildAndTestSubdir = "src-tauri";
-
-  cargoLock = {
-    lockFile = ../src-tauri/Cargo.lock;
-  };
+  sourceRoot = "qxchat-linux-${arch}";
 
   nativeBuildInputs = [
-    pkg-config
+    autoPatchelfHook
     makeWrapper
     wrapGAppsHook4
     copyDesktopItems
-    gobject-introspection
   ];
-
-  postPatch = ''
-        # Prevent Tauri from trying to run bun build steps inside the Rust build hook.
-        substituteInPlace src-tauri/tauri.conf.json \
-          --replace-fail '"beforeBuildCommand": "cd client && bun run build:tauri",' '"beforeBuildCommand": "",'
-
-        rm -rf client/dist
-        mkdir -p client
-        cp -r ${frontend}/dist client/dist
-        chmod -R u+w client/dist
-
-  '';
 
   buildInputs = [
     gtk3
@@ -236,16 +173,37 @@ rustPlatform.buildRustPackage {
   ]
   ++ gstPlugins;
 
+  # The prebuilt binary has no runtime search path; autoPatchelfHook appends
+  # everything from buildInputs, and we add the remaining wrap below.
+  autoPatchelfIgnoreMissingDeps = [
+    # Ayatana indicator is dlopen()ed by Tauri at runtime; resolved via
+    # LD_LIBRARY_PATH in the wrapper instead of a DT_NEEDED entry.
+    "libayatana-appindicator3.so.1"
+  ];
+
+  dontWrapGApps = true;
+
+  installPhase = ''
+    runHook preInstall
+
+    mkdir -p $out/bin
+    install -Dm755 qxchat "$out/bin/qxchat"
+
+    if [ -f icon.png ]; then
+      install -Dm644 icon.png "$out/share/icons/hicolor/512x512/apps/qxchat.png"
+    fi
+
+    runHook postInstall
+  '';
+
   desktopItems = [ desktopItem ];
 
-  postInstall = ''
-    install -Dm644 src-tauri/icons/icon.png "$out/share/icons/hicolor/512x512/apps/qxchat.png"
-
+  postFixup = ''
     wrapProgram "$out/bin/qxchat" \
       --set G_APPLICATION_ID "com.qxp.client" \
       --set WEBKIT_DISABLE_DMABUF_RENDERER "1" \
       --set WEBKIT_DISABLE_COMPOSITING_MODE "1" \
-      --set LD_LIBRARY_PATH "${runtimeLibPath}" \
+      --prefix LD_LIBRARY_PATH : "${runtimeLibPath}" \
       --set GIO_MODULE_DIR "${glib-networking}/lib/gio/modules" \
       --set GIO_EXTRA_MODULES "${glib-networking}/lib/gio/modules" \
       --set GST_PLUGIN_SYSTEM_PATH_1_0 "${gstPluginPath}" \
@@ -253,14 +211,19 @@ rustPlatform.buildRustPackage {
       --set GST_PLUGIN_SYSTEM_PATH "${gstPluginPath}" \
       --set GST_PLUGIN_PATH "${gstPluginPath}" \
       --set PIPEWIRE_MODULE_DIR "${pipewire}/lib/pipewire-0.3" \
-      --set SPA_PLUGIN_DIR "${pipewireSpaPath}"
+      --set SPA_PLUGIN_DIR "${pipewireSpaPath}" \
+      "''${gappsWrapperArgs[@]}"
   '';
 
   meta = {
-    description = "QxChat desktop client (Tauri)";
+    description = "QxChat desktop client (Tauri, prebuilt binary)";
     homepage = "https://github.com/lqxp/client";
     license = lib.licenses.mit;
-    platforms = lib.platforms.linux;
+    platforms = [
+      "x86_64-linux"
+      "aarch64-linux"
+    ];
     mainProgram = "qxchat";
+    sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
   };
 }

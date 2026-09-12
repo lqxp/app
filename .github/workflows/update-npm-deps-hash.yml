@@ -1,6 +1,12 @@
-name: Update pnpm fetch hash
+name: Update Nix binary hashes
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to sync nix/qxchat.nix with (e.g. v1.20.3, empty = latest)'
+        required: false
+        type: string
+        default: ''
 jobs:
   update-hash:
     runs-on: ubuntu-latest
@@ -9,48 +15,52 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
-      - uses: cachix/install-nix-action@v27
-
-      - name: Try build and capture expected hash
-        id: hash
+      - name: Sync nix/qxchat.nix with release binaries
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TAG: ${{ inputs.tag }}
         shell: bash
         run: |
-          set +e
-          out=$(nix-build -E 'let pkgs = import (builtins.fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz") {}; in pkgs.callPackage ./nix/qxchat.nix {}' 2>&1)
-          code=$?
-          echo "$out"
-          if [ $code -eq 0 ]; then
-            echo "already_ok=true" >> "$GITHUB_OUTPUT"
-            exit 0
+          set -euo pipefail
+          TAG="$INPUT_TAG"
+          if [ -z "$TAG" ]; then
+            TAG="$(gh release view --json tagName -q .tagName)"
           fi
-          hash=$(echo "$out" | sed -n 's/.*got:[[:space:]]*\(sha256-[A-Za-z0-9+/=]*\).*/\1/p' | head -n1)
-          if [ -z "$hash" ]; then
-            echo "Could not find expected sha256 hash in nix output"
-            exit 1
-          fi
-          echo "hash=$hash" >> "$GITHUB_OUTPUT"
-      - name: Patch nix/qxchat.nix
-        if: steps.hash.outputs.already_ok != 'true'
-        shell: bash
-        run: |
-          sed -i "s#hash = \"sha256-[^\"]*\";#hash = \"${{ steps.hash.outputs.hash }}\";#" nix/qxchat.nix
-          grep -n "hash = \"sha256-" nix/qxchat.nix
+          VERSION="${TAG#v}"
+          echo "Syncing nix/qxchat.nix to $TAG (version $VERSION)"
+          rm -rf /tmp/nixhash && mkdir -p /tmp/nixhash
+          gh release download "$TAG" -p "QxChat_${VERSION}_linux-x86_64.tar.gz" -D /tmp/nixhash
+          gh release download "$TAG" -p "QxChat_${VERSION}_linux-aarch64.tar.gz" -D /tmp/nixhash
+          python3 - /tmp/nixhash "$VERSION" << 'EOF'
+          import hashlib, base64, sys, re
+          d, version = sys.argv[1], sys.argv[2]
+          def sri(p):
+              h = hashlib.sha256(open(p, 'rb').read()).digest()
+              return 'sha256-' + base64.b64encode(h).decode()
+          x86 = sri(f"{d}/QxChat_{version}_linux-x86_64.tar.gz")
+          arm = sri(f"{d}/QxChat_{version}_linux-aarch64.tar.gz")
+          p = 'nix/qxchat.nix'
+          s = open(p).read()
+          s = re.sub(r'^\s*version \? "[^"]*",', f'  version ? "{version}",', s, count=1, flags=re.M)
+          s = re.sub(r'x86_64-linux = "sha256-[^"]*";', f'x86_64-linux = "{x86}";', s, count=1)
+          s = re.sub(r'aarch64-linux = "sha256-[^"]*";', f'aarch64-linux = "{arm}";', s, count=1)
+          open(p, 'w').write(s)
+          print(f"version={version}\nx86_64={x86}\naarch64={arm}")
+          EOF
+          grep -n -E 'version \?|x86_64-linux =|aarch64-linux =' nix/qxchat.nix
+
       - name: Create Pull Request
         id: create-pr
-        if: steps.hash.outputs.already_ok != 'true'
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.NIXOS_BUILD_USER_PAT_TOKEN != '' && secrets.NIXOS_BUILD_USER_PAT_TOKEN || github.token }}
-          commit-message: "chore(nix): update pnpm fetch hash"
-          title: "chore(nix): update pnpm fetch hash"
+          commit-message: "chore(nix): sync prebuilt binary version/hashes"
+          title: "chore(nix): sync prebuilt binary version/hashes"
           body: |
-            Automated update of the `fetchPnpmDeps` hash in `nix/qxchat.nix`.
-            - Triggered after a successful Linux release build
-            - Hash extracted from Nix fixed-output derivation error (`got: sha256-...`)
-          branch: "ci/update-pnpm-fetch-hash"
+            Automated sync of `version` and `binaryHashes` in `nix/qxchat.nix`
+            with the prebuilt Linux tarballs from the latest GitHub release.
+          branch: "ci/update-nix-binary-hashes"
           delete-branch: true
           labels: |
             ci
@@ -59,7 +69,7 @@ jobs:
             nix/qxchat.nix
 
       - name: Auto-merge PR
-        if: steps.hash.outputs.already_ok != 'true' && steps.create-pr.outputs.pull-request-number != ''
+        if: steps.create-pr.outputs.pull-request-number != ''
         env:
           GH_TOKEN: ${{ secrets.NIXOS_BUILD_USER_PAT_TOKEN }}
         run: |

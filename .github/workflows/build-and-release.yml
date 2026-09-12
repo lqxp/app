@@ -65,20 +65,24 @@ jobs:
             runner: ubuntu-22.04
             rust_targets: ''
             args: --bundles appimage,deb,rpm
+            nix_arch: x86_64
             release_files: |
               src-tauri/target/release/bundle/appimage/*.AppImage
               src-tauri/target/release/bundle/deb/*.deb
               src-tauri/target/release/bundle/rpm/*.rpm
               src-tauri/target/release/bundle/**/*.sig
+              release-nix/*.tar.gz
           - platform_name: Linux-arm64
             runner: ubuntu-24.04-arm
             rust_targets: ''
             args: --bundles appimage,deb,rpm
+            nix_arch: aarch64
             release_files: |
               src-tauri/target/release/bundle/appimage/*.AppImage
               src-tauri/target/release/bundle/deb/*.deb
               src-tauri/target/release/bundle/rpm/*.rpm
               src-tauri/target/release/bundle/**/*.sig
+              release-nix/*.tar.gz
           - platform_name: Windows-x64
             runner: windows-latest
             rust_targets: x86_64-pc-windows-msvc
@@ -95,14 +99,22 @@ jobs:
               src-tauri/target/aarch64-pc-windows-msvc/release/bundle/msi/*.msi
               src-tauri/target/aarch64-pc-windows-msvc/release/bundle/**/*.zip
               src-tauri/target/aarch64-pc-windows-msvc/release/bundle/**/*.sig
-          - platform_name: macOS
+          - platform_name: macOS-arm64
             runner: macos-latest
-            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
-            args: --target universal-apple-darwin --bundles app,dmg
+            rust_targets: aarch64-apple-darwin
+            args: --target aarch64-apple-darwin --bundles app,dmg
             release_files: |
-              src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
-              src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app.tar.gz
-              src-tauri/target/universal-apple-darwin/release/bundle/**/*.sig
+              src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+              src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz
+              src-tauri/target/aarch64-apple-darwin/release/bundle/**/*.sig
+          - platform_name: macOS-x64
+            runner: macos-15-intel
+            rust_targets: x86_64-apple-darwin
+            args: --target x86_64-apple-darwin --bundles app,dmg
+            release_files: |
+              src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg
+              src-tauri/target/x86_64-apple-darwin/release/bundle/macos/*.app.tar.gz
+              src-tauri/target/x86_64-apple-darwin/release/bundle/**/*.sig
 
     steps:
       - name: Checkout repository
@@ -169,18 +181,43 @@ jobs:
           chmod +x scripts/build-tauri-ci.sh
           scripts/build-tauri-ci.sh ${{ matrix.args }}
 
+      - name: Package Linux binary tarball (Nix)
+        if: startsWith(matrix.platform_name, 'Linux')
+        shell: bash
+        env:
+          APP_VERSION: ${{ needs.prepare-release.outputs.app_version }}
+          NIX_ARCH: ${{ matrix.nix_arch }}
+        run: |
+          set -euo pipefail
+          BIN="src-tauri/target/release/qxchat"
+          if [ ! -x "$BIN" ]; then
+            echo "::error::Expected Linux binary not found at $BIN"
+            ls -la src-tauri/target/release/ || true
+            exit 1
+          fi
+          mkdir -p release-nix
+          # Stage with a versioned top-level dir so `tar -tzf` is self-describing,
+          # but keep the binary at a stable relative path for the Nix wrapper.
+          STAGE="$(mktemp -d)"
+          mkdir -p "$STAGE/qxchat-linux-$NIX_ARCH"
+          cp "$BIN" "$STAGE/qxchat-linux-$NIX_ARCH/qxchat"
+          chmod +x "$STAGE/qxchat-linux-$NIX_ARCH/qxchat"
+          # Ship the app icon so the Nix wrapper can install it without a source checkout.
+          if [ -f "src-tauri/icons/icon.png" ]; then
+            cp "src-tauri/icons/icon.png" "$STAGE/qxchat-linux-$NIX_ARCH/icon.png"
+          fi
+          TARBALL="release-nix/QxChat_${APP_VERSION}_linux-${NIX_ARCH}.tar.gz"
+          tar -czf "$TARBALL" -C "$STAGE" "qxchat-linux-$NIX_ARCH"
+          rm -rf "$STAGE"
+          sha256sum "$TARBALL"
+          tar -tzf "$TARBALL"
+
       - name: Upload desktop artifacts
         uses: actions/upload-artifact@v4
         with:
           name: qxchat-${{ matrix.platform_name }}
           if-no-files-found: error
           path: ${{ matrix.release_files }}
-
-      - name: Trigger Nix pnpm hash update
-        if: matrix.platform_name == 'Linux-x64'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run update-npm-deps-hash.yml --ref main
 
   build-android:
     name: Build Android APK
@@ -273,19 +310,41 @@ jobs:
           path: release-assets
           merge-multiple: true
 
-      - name: Generate Nix flake
+      - name: Generate Nix flake (prebuilt binaries)
         shell: bash
         env:
           APP_VERSION: ${{ needs.prepare-release.outputs.app_version }}
+          TAG_NAME: ${{ needs.prepare-release.outputs.tag_name }}
+          GH_REPO: ${{ github.repository }}
         run: |
+          set -euo pipefail
+          X86_TARBALL="release-assets/QxChat_${APP_VERSION}_linux-x86_64.tar.gz"
+          ARM_TARBALL="release-assets/QxChat_${APP_VERSION}_linux-aarch64.tar.gz"
+          for f in "$X86_TARBALL" "$ARM_TARBALL"; do
+            if [ ! -f "$f" ]; then
+              echo "::error::Missing Nix tarball $f (Linux binary packaging step failed?)"
+              ls -la release-assets/ || true
+              exit 1
+            fi
+          done
+          sri() {
+            python3 -c "import hashlib,base64,sys; print('sha256-' + base64.b64encode(hashlib.sha256(open(sys.argv[1],'rb').read()).digest()).decode())" "$1"
+          }
+          HASH_X86="$(sri "$X86_TARBALL")"
+          HASH_ARM="$(sri "$ARM_TARBALL")"
+          echo "x86_64 hash: $HASH_X86"
+          echo "aarch64 hash: $HASH_ARM"
           cat > "release-assets/QxChat_${APP_VERSION}_flake.nix" << FLAKE
-          # QxChat ${APP_VERSION} — NixOS flake
-          # Drop this into your NixOS configuration to install QxChat.
+          # QxChat ${APP_VERSION} — NixOS flake (prebuilt binaries, no compilation)
+          # Fetches the CI-built Tauri binaries from release assets and injects
+          # them into a NixOS ld environment (patchelf + wrapProgram).
+          # The wrapper logic lives in nix/qxchat.nix inside qxchat-src;
+          # this flake only pins the exact binary hashes published alongside it.
           #
           # Usage (flake.nix):
           #
           #   {
-          #     inputs.qxchat.url = "github:lqxp/app/releases/download/v${APP_VERSION}/QxChat_${APP_VERSION}_flake.nix";
+          #     inputs.qxchat.url = "github:${GH_REPO}/releases/download/${TAG_NAME}/QxChat_${APP_VERSION}_flake.nix";
           #     ...
           #   }
           #
@@ -298,13 +357,13 @@ jobs:
           #   }
 
           {
-            description = "QxChat ${APP_VERSION} — NixOS flake";
+            description = "QxChat ${APP_VERSION} — NixOS flake (prebuilt)";
 
             inputs = {
               nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
               qxchat-src = {
-                url = "git+https://github.com/lqxp/app.git?ref=v${APP_VERSION}&submodules=1";
+                url = "github:${GH_REPO}/${TAG_NAME}";
                 flake = false;
               };
             };
@@ -319,6 +378,13 @@ jobs:
 
                 forAllSystems = nixpkgs.lib.genAttrs systems;
 
+                # SRI hashes of the prebuilt Linux tarballs published
+                # alongside this flake as release assets.
+                binaryHashes = {
+                  x86_64-linux = "$HASH_X86";
+                  aarch64-linux = "$HASH_ARM";
+                };
+
                 qxchatPackage =
                   { system }:
                   let
@@ -327,13 +393,16 @@ jobs:
                       config.allowUnfree = true;
                     };
                   in
-                  pkgs.callPackage "\${qxchat-src}/nix/qxchat.nix" { };
+                  pkgs.callPackage "\${qxchat-src}/nix/qxchat.nix" {
+                    version = "${APP_VERSION}";
+                    inherit binaryHashes;
+                  };
               in
               {
                 nixosModules.default = import "\${qxchat-src}/nix/module.nix";
 
                 overlays.default = final: prev: {
-                  qxchat = prev.callPackage "\${qxchat-src}/nix/qxchat.nix" { };
+                  qxchat = self.packages.\${final.system}.qxchat;
                 };
 
                 packages = forAllSystems (
@@ -366,7 +435,7 @@ jobs:
           all_sigs = glob.glob("release-assets/**/*.sig", recursive=True)
           for s in all_sigs:
               print(f"  {s}")
-          print(f"=== ===")
+          print("=== ===")
           
           platforms = {}
           for sig_file in glob.glob("release-assets/**/*.sig", recursive=True):
@@ -384,25 +453,29 @@ jobs:
                   platforms[key] = {"signature": sig_content, "url": url}
                   print(f"  -> {key}")
               # macOS: .app.tar.gz, .app.zip, or app.zip
-              # Note: universal-apple-darwin produces "QxChat.app.tar.gz" or "QxChat_1.15.8_app.zip"
+              # Per-arch builds produce e.g. "QxChat_1.20.3_aarch64.app.tar.gz"
+              # and "QxChat_1.20.3_x64.app.tar.gz" (Tauri uses x64 for Intel).
               elif ".app.tar.gz" in asset_name or ".app.zip" in asset_name or "app.zip" in asset_name:
-                  if "aarch64" in asset_name and "x86_64" not in asset_name:
+                  lower = asset_name.lower()
+                  is_arm = "aarch64" in lower or "arm64" in lower
+                  is_intel = "x86_64" in lower or "x64" in lower
+                  if is_arm and not is_intel:
                       platforms["darwin-aarch64"] = {"signature": sig_content, "url": url}
-                      print(f"  -> darwin-aarch64")
-                  elif "x86_64" in asset_name and "aarch64" not in asset_name:
+                      print("  -> darwin-aarch64")
+                  elif is_intel and not is_arm:
                       platforms["darwin-x86_64"] = {"signature": sig_content, "url": url}
-                      print(f"  -> darwin-x86_64")
+                      print("  -> darwin-x86_64")
                   else:
                       platforms["darwin-aarch64"] = {"signature": sig_content, "url": url}
                       platforms["darwin-x86_64"] = {"signature": sig_content, "url": url}
-                      print(f"  -> darwin-aarch64 + darwin-x86_64")
+                      print("  -> darwin-aarch64 + darwin-x86_64")
               # Linux: .AppImage or .AppImage.tar.gz
               elif ".AppImage" in asset_name:
                   key = "linux-aarch64" if "arm64" in asset_name or "aarch64" in asset_name else "linux-x86_64"
                   platforms[key] = {"signature": sig_content, "url": url}
                   print(f"  -> {key}")
               else:
-                  print(f"  -> no match")
+                  print("  -> no match")
                   
           latest = {
               "version": version,

@@ -16,11 +16,7 @@ Actually you can do a cross to top slide with your thumb to open settings page. 
 
 - The tor connectivity map is only loading when the user press "Refresh relays" and accepting the modal
     - This bearvhior is a bug, the tor map doesn't need to loaded by an user prompting .
-- Logout button in Settings doesn't need confirmation
-    Instead of directely disconnecting the user after the button targeted, showing a modal that show a
-    confirmation for Logout
 - In a specific hardware configuration: QxChat desktop on computer with a touchpad screen:
     pinch to zoom seem to work in some place (settings like tor map)
     making the QxChat client with a buggy scale that need to be close to reset.
-- Integrate the CTRL + (+), CTRL + (-), CTRL + (0), respectly to adding,reduce,reset the window scale. Like web browser.
 - Actual QxChat dmg doesn't work at all on macos. We need to split two dmg instead of one for both cpu architecture (apple silicons, intel)
