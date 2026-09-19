@@ -28,6 +28,10 @@
     "tor:allow-circuit",
     "tor:allow-geo",
     "tor:allow-geo-ip",
+    "discord-rpc:allow-get-settings",
+    "discord-rpc:allow-set-enabled",
+    "discord-rpc:allow-set-show-platform",
+    "discord-rpc:allow-get-status",
     {
       "identifier": "opener:allow-open-url",
       "allow": [
