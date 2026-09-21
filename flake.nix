@@ -270,6 +270,7 @@
                 pkgs.gst_all_1.gst-plugins-ugly
                 pkgs.gst_all_1.gst-libav
                 pkgs.libayatana-appindicator
+                pkgs.alsa-lib
               ]
             }"
 
