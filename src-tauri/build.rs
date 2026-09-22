@@ -11,6 +11,10 @@ fn main() {
                 tauri_build::InlinedPlugin::new().commands(&["start", "stop"]),
             )
             .plugin(
+                "integrity",
+                tauri_build::InlinedPlugin::new().commands(&["fingerprint"]),
+            )
+            .plugin(
                 "background",
                 tauri_build::InlinedPlugin::new()
                     .commands(&["start_background", "stop_background", "is_background_running"]),

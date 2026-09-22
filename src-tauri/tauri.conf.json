@@ -23,6 +23,7 @@
         "fullscreen": false,
         "decorations": false,
         "devtools": true,
+      "dragDropEnabled": false,
         "additionalBrowserArgs": "--proxy-server=socks5://127.0.0.1:9050 --proxy-bypass-list=<-loopback>;localhost;127.0.0.1"
       }
     ],

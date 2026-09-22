@@ -20,6 +20,7 @@
     "background:allow-start-background",
     "background:allow-stop-background",
     "background:allow-is-background-running",
+    "integrity:allow-fingerprint",
     "tor:allow-status",
     "tor:allow-start",
     "tor:allow-stop",
