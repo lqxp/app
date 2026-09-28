@@ -16,11 +16,6 @@ CARGO_LOCK = ROOT / "src-tauri" / "Cargo.lock"
 TAURI_CONF = ROOT / "src-tauri" / "tauri.conf.json"
 QXCHAT_NIX = ROOT / "nix" / "qxchat.nix"
 
-# Sibling umbrella project: ../lqxp, whose "web" folder is a submodule
-# pointing at this repo. After a release, we pin it to the new tag.
-LQXP_SIBLING_DIR = ROOT.parent / "lqxp"
-LQXP_WEB_SUBMODULE = LQXP_SIBLING_DIR / "web"
-
 SEMVER_RE = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 
 
@@ -40,10 +35,6 @@ def paint(text: str, color: str) -> str:
 def die(message: str) -> NoReturn:
     print(paint(f"Error: {message}", Color.RED), file=sys.stderr)
     sys.exit(1)
-
-
-def info(message: str) -> None:
-    print(paint(message, Color.BLUE))
 
 
 def note(message: str) -> None:
@@ -351,32 +342,6 @@ def release_version(version: str, push: bool, client_is_git_repo: bool) -> None:
     create_version_tag(ROOT, version, push)
 
 
-def sync_lqxp_submodule(version: str) -> None:
-    """If a sibling 'lqxp' project sits next to this repo, pull the freshly
-    tagged release into its 'web' submodule and push the updated pointer.
-    """
-    if not is_git_repo(LQXP_SIBLING_DIR):
-        return
-
-    if not is_git_repo(LQXP_WEB_SUBMODULE):
-        warn(f"{LQXP_WEB_SUBMODULE} not found or not a git repo, skipping submodule sync")
-        return
-
-    tag_name = f"v{version}"
-    info(f"Syncing {LQXP_WEB_SUBMODULE} to {tag_name}")
-    run_git(["fetch", "origin", "--tags"], cwd=LQXP_WEB_SUBMODULE)
-    run_git(["checkout", "-B", "main", tag_name], cwd=LQXP_WEB_SUBMODULE)
-
-    if not has_changes(LQXP_SIBLING_DIR, ["web"]):
-        info(f"{LQXP_SIBLING_DIR} already points at {tag_name}, nothing to push")
-        return
-
-    ensure_up_to_date(LQXP_SIBLING_DIR, push=True)
-    commit_changes(LQXP_SIBLING_DIR, ["web"], f"Update web submodule to {tag_name}")
-    run_git(["push", "origin", "HEAD"], cwd=LQXP_SIBLING_DIR)
-    success(f"lqxp/web submodule pointer pushed for {tag_name}")
-
-
 # --- CLI -------------------------------------------------------------------
 
 def build_parser() -> argparse.ArgumentParser:
@@ -419,8 +384,6 @@ def main() -> None:
 
     if should_release:
         release_version(new_version, push, client_is_git_repo)
-        if push:
-            sync_lqxp_submodule(new_version)
 
     success(f"Version updated to {new_version}")
     print(paint("Updated files:", Color.BOLD))
