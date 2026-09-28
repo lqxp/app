@@ -30,12 +30,22 @@ class MainActivity : TauriActivity() {
     // cutout, but Android's WebView reports env(safe-area-inset-*) as 0, so
     // the frontend cannot compensate by itself. Forward the real insets into
     // the page; index.html's __lqxpSetSystemInsets turns them into CSS vars.
+    //
+    // Keyboard: with decorFitsSystemWindows=false (edge-to-edge) Android
+    // ignores windowSoftInputMode="adjustResize", so the WebView never
+    // shrinks when the keyboard opens (window.innerHeight stays full height
+    // and visualViewport may not move either). Forward the IME bottom inset
+    // (physical px) through __lqxpSetKeyboardInset so the frontend can shrink
+    // its own app shell (layout height - keyboard height) like adjustResize
+    // would have done natively. Returning `insets` untouched keeps
+    // propagation intact for the WebView and its children.
     ViewCompat.setOnApplyWindowInsetsListener(webView) { view, insets ->
       val bars = insets.getInsets(
         WindowInsetsCompat.Type.systemBars()
           or WindowInsetsCompat.Type.displayCutout()
       )
-      pushInsets(bars.top, bars.bottom)
+      val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+      pushInsets(bars.top, bars.bottom, ime.bottom)
       insets
     }
 
@@ -59,13 +69,15 @@ class MainActivity : TauriActivity() {
       WindowInsetsCompat.Type.systemBars()
         or WindowInsetsCompat.Type.displayCutout()
     )
-    pushInsets(bars.top, bars.bottom)
+    val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+    pushInsets(bars.top, bars.bottom, ime.bottom)
   }
 
-  private fun pushInsets(top: Int, bottom: Int) {
+  private fun pushInsets(top: Int, bottom: Int, imeBottom: Int = 0) {
     val view = webViewRef ?: return
     view.evaluateJavascript(
-      "window.__lqxpSetSystemInsets && window.__lqxpSetSystemInsets($top, $bottom);",
+      "window.__lqxpSetSystemInsets && window.__lqxpSetSystemInsets($top, $bottom);" +
+        "window.__lqxpSetKeyboardInset && window.__lqxpSetKeyboardInset($imeBottom);",
       null
     )
   }
