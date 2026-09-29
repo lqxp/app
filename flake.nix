@@ -254,6 +254,13 @@
             # here — prod (nix/qxchat.nix) documents that forcing the legacy renderer
             # segfaults the UI process on AMD + Wayland. DMABUF is the default.
             #
+            # Software GL by default in dev: a nix shell on a foreign distro has
+            # no host EGL/DRI drivers wired up, so EGL display creation aborts
+            # (EGL_BAD_PARAMETER). llvmpipe is slower but works everywhere.
+            # Unset for real-GPU testing when host drivers are known good:
+            #   export -n LIBGL_ALWAYS_SOFTWARE
+            export LIBGL_ALWAYS_SOFTWARE=1
+            #
             # Host GTK modules (e.g. colorreload-gtk-module from the host theme)
             # are ABI-incompatible with the nix GTK: drop them in dev.
             unset GTK_MODULES
