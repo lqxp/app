@@ -198,11 +198,15 @@ stdenv.mkDerivation {
 
   desktopItems = [ desktopItem ];
 
+  # No WEBKIT_DISABLE_DMABUF_RENDERER / WEBKIT_DISABLE_COMPOSITING_MODE here.
+  # Forcing the legacy (non-DMABUF) WebKit renderer segfaults the UI process on
+  # AMD + Wayland with webkitgtk 2.52 (SEGV in WebKit::AcceleratedBackingStore::
+  # update via DrawingAreaProxy::didReceiveMessage). The DMABUF renderer is the
+  # well-supported default in current webkitgtk; users with broken GPU stacks
+  # can re-add a workaround via their own wrapProgram override.
   postFixup = ''
     wrapProgram "$out/bin/qxchat" \
       --set G_APPLICATION_ID "com.qxp.client" \
-      --set WEBKIT_DISABLE_DMABUF_RENDERER "1" \
-      --set WEBKIT_DISABLE_COMPOSITING_MODE "1" \
       --prefix LD_LIBRARY_PATH : "${runtimeLibPath}" \
       --set GIO_MODULE_DIR "${glib-networking}/lib/gio/modules" \
       --set GIO_EXTRA_MODULES "${glib-networking}/lib/gio/modules" \
