@@ -21,10 +21,30 @@ the server (`lqxp/lqxp`) is a blind relay.
 cd client
 bun run typecheck   # vue-tsc; pre-existing errors in unrelated components only — add none in touched files
 bun run build       # vite build + runtime-config inject; must succeed
+bun test src        # unit + mesh/phantom stress tests; must stay green
 ```
 
 No unit-test harness; relay-affecting changes must at minimum typecheck and
 build.
+
+## Testing protocol (mandatory for protocol / implementation changes)
+
+Every change to a protocol or its implementation MUST ship with tests kept
+in the codebase (`bun test src`):
+
+- **Unit tests**: `src/crypto/cloudsync.test.ts` (KDF, full handshake,
+  tamper matrix, chunk budget, deepMerge), `src/crypto/phantom-stress.test.ts`
+  (bundles, rendezvous, outer-label malleability, epoch/blocks, padding).
+- **Mocking + fault injection**: `src/composables/cloudsync-mesh.test.ts`
+  drives REAL `useCloudSync` instances through a `MockRelay` (stale routes,
+  partitions, duplicates, tampering, revoke); `phantom-stress.test.ts` uses
+  a `MockDeadDrop` (drops, double-polls, TTL, oversize).
+- **Test shims**: `src/test-shim.ts` (browser globals) is test-only —
+  production must never import it. One isolated localStorage per mock device
+  via `runWithStorage` (AsyncLocalStorage); shared storage cross-contaminates
+  restored sessions.
+- A stress run that finds a bug MUST include a regression test reproducing
+  it.
 
 ## Languages — ENGLISH ONLY IN CODE
 
