@@ -27,6 +27,7 @@
     "tor:allow-toggle",
     "tor:allow-is-ready",
     "tor:allow-relays",
+    "tor:allow-warmup",
     "tor:allow-circuit",
     "tor:allow-geo",
     "tor:allow-geo-ip",

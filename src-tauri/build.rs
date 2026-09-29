@@ -10,6 +10,7 @@ fn main() {
                     "toggle",
                     "is_ready",
                     "relays",
+                    "warmup",
                     "circuit",
                     "geo",
                     "geo_ip",

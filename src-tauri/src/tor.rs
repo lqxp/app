@@ -358,6 +358,41 @@ async fn is_ready<R: Runtime>(
     probe_port(port).await
 }
 
+/// Warms up the Tor circuit with a minimal first-party request through the
+/// local Tor SOCKS5 proxy (`socks5h` = DNS resolved by Tor, no local leak).
+///
+/// Unlike `relays` (third-party Onionoo directory, consent-gated in the UI),
+/// this contacts only qxch.at — a destination the app already talks to — so
+/// it needs no consent. Any proxied stream publishes its circuit (see
+/// `engine::publish_circuit`), which lets the Settings map render on section
+/// open without waiting for unrelated app traffic.
+#[tauri::command]
+async fn warmup<R: Runtime>(
+    _app: AppHandle<R>,
+    state: State<'_, TorState>,
+) -> Result<(), String> {
+    if !state.is_running() || state.is_external() {
+        return Err("Tor is not running.".into());
+    }
+    let port = state.current_port();
+    let proxy = format!("socks5h://127.0.0.1:{port}");
+    let client = reqwest::Client::builder()
+        .proxy(reqwest::Proxy::all(&proxy).map_err(|e| format!("proxy: {e}"))?)
+        .user_agent("QxChat/1.0 (+https://qxch.at)")
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .map_err(|e| format!("client: {e}"))?;
+    // HEAD is enough: the circuit is published at CONNECT time. Any response
+    // (even an error status) means a stream flowed; only a transport failure
+    // is reported so the UI can retry.
+    client
+        .head("https://qxch.at/")
+        .send()
+        .await
+        .map_err(|e| format!("warmup via {proxy}: {e}"))?;
+    Ok(())
+}
+
 /// Fetches the Tor relay directory through the local Tor SOCKS5 proxy.
 ///
 /// This is deliberately routed through Tor (not the WebView) so that even
@@ -590,7 +625,7 @@ fn resolve_foreign_tor<R: Runtime>(app: &AppHandle<R>) {
 /// Initializes the Tor plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("tor")
-        .invoke_handler(tauri::generate_handler![status, start, stop, toggle, is_ready, relays, circuit, geo, geo_ip])
+        .invoke_handler(tauri::generate_handler![status, start, stop, toggle, is_ready, relays, warmup, circuit, geo, geo_ip])
         .setup(|app, _api| {
             app.manage(TorState::default());
 
