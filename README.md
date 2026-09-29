@@ -37,12 +37,12 @@
 
 ## Features
 
-★ **Native shell** — system tray, native notifications, auto-updates from GitHub releases, deep polish per OS.
-★ **Embedded Tor** — one-click Tor routing with live circuit map, relay directory, and geo view.
-★ **Device sync** — rooms, messages, settings and keys across phone, desktop and web via QxCloudSync.
-★ **Calls & whiteboard** — WebRTC voice, per-user volume, collaborative whiteboard, polls, spoiler effects.
-★ **Privacy modes** — client lock, RAM-only OPSEC, decoy vault, streamer mode, 12-word recovery.
-★ **Extras** — Discord Rich Presence, custom themes, EN/FR/RU/ES locales, screen-share audio.
+- ★ **Native shell** — system tray, native notifications, auto-updates from GitHub releases, deep polish per OS.
+- ★ **Embedded Tor** — one-click Tor routing with live circuit map, relay directory, and geo view.
+- ★ **Device sync** — rooms, messages, settings and keys across phone, desktop and web via QxCloudSync.
+- ★ **Calls & whiteboard** — WebRTC voice, per-user volume, collaborative whiteboard, polls, spoiler effects.
+- ★ **Privacy modes** — client lock, RAM-only OPSEC, decoy vault, streamer mode, 12-word recovery.
+- ★ **Extras** — Discord Rich Presence, custom themes, EN/FR/RU/ES locales, screen-share audio.
 
 ---
 
