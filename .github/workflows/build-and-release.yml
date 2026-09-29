@@ -181,6 +181,22 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # macOS code signing / notarization (optionnel).
+          # Sans compte Apple Developer payant, on retombe sur la signature
+          # ad-hoc ("-") déclarée dans src-tauri/tauri.conf.json > bundle > macOS.
+          # C'est ce qui évite le "fichier endommagé" sur Apple Silicon
+          # (Gatekeeper exige au minimum une signature ad-hoc pour l'ARM).
+          # Avec un certificat "Developer ID Application" + notarisation,
+          # renseignez ces secrets et Tauri signera/notarisera automatiquement.
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ secrets.APPLE_API_KEY_PATH }}
           QXP_RUNTIME_CONFIG_URL: ${{ env.QXP_RUNTIME_CONFIG_URL }}
           QXP_SERVER_ORIGIN: ${{ env.QXP_SERVER_ORIGIN }}
           QXP_API_BASE_URL: ${{ env.QXP_API_BASE_URL }}
@@ -188,8 +204,35 @@ jobs:
           QXP_CALLS_ENABLED: ${{ env.QXP_CALLS_ENABLED }}
           QXP_CALLS_UNAVAILABLE_REASON: ${{ env.QXP_CALLS_UNAVAILABLE_REASON }}
         run: |
+          # Défaut explicite : signature ad-hoc si aucun secret Apple configuré.
+          # (tauri.conf.json contient déjà "signingIdentity": "-",
+          # mais une variable vide écraserait ce défaut — on la normalise ici.)
+          if [ -z "${APPLE_SIGNING_IDENTITY:-}" ]; then
+            export APPLE_SIGNING_IDENTITY="-"
+          fi
+          echo "macOS signing identity: ${APPLE_SIGNING_IDENTITY:0:20}..."
           chmod +x scripts/build-tauri-ci.sh
           scripts/build-tauri-ci.sh ${{ matrix.args }}
+
+      - name: Verify macOS signature (macOS only)
+        if: startsWith(matrix.platform_name, 'macOS')
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_BUNDLE="$(find src-tauri/target -maxdepth 4 -name '*.app' -type d -print -quit)"
+          if [ -z "${APP_BUNDLE:-}" ]; then
+            echo "::error::No .app bundle found for signature verification"
+            exit 1
+          fi
+          echo "Verifying $APP_BUNDLE"
+          codesign --verify --deep --strict --verbose=2 "$APP_BUNDLE" || true
+          codesign -dv --verbose=4 "$APP_BUNDLE" || true
+          # spctl échoue (rejeté) pour une signature ad-hoc : c'est attendu
+          # sans notarisation. On l'affiche à titre informatif sans faire
+          # échouer le build.
+          spctl -a -vv "$APP_BUNDLE" || true
+          echo "--- DMGs ---"
+          find src-tauri/target -name '*.dmg' -print
 
       - name: Package Linux binary tarball (Nix)
         if: startsWith(matrix.platform_name, 'Linux')
