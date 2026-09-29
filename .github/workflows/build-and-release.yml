@@ -234,7 +234,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          APP_BUNDLE="$(find src-tauri/target -maxdepth 4 -name '*.app' -type d -print -quit)"
+          # Pas de -maxdepth : avec --target, le bundle vit à 5 niveaux
+          # (target/<triple>/release/bundle/macos/QxChat.app), donc -maxdepth 4
+          # ne le voyait pas.
+          APP_BUNDLE="$(find src-tauri/target -name '*.app' -type d -print -quit)"
           if [ -z "${APP_BUNDLE:-}" ]; then
             echo "::error::No .app bundle found for signature verification"
             exit 1
