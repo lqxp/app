@@ -258,6 +258,8 @@
                 pkgs.at-spi2-atk
                 pkgs.glib-networking
                 pkgs.harfbuzz
+
+                pkgs.alsa-lib
                 pkgs.librsvg
                 pkgs.libsoup_3
                 pkgs.openssl
