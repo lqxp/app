@@ -169,6 +169,15 @@
               dbus
               libayatana-appindicator
               alsa-lib
+              # GL/GPU stack for the WebKit DMABUF renderer (prod parity:
+              # see nix/qxchat.nix — without these the UI process can SEGV).
+              libdrm
+              libgbm
+              libglvnd
+              mesa
+              libepoxy
+              wayland
+              pipewire
             ])
             ++ gstPlugins;
 
@@ -241,11 +250,19 @@
             export GST_PLUGIN_SYSTEM_PATH="${gstPluginPath}"
             export GST_PLUGIN_PATH="${gstPluginPath}"
             export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules"
-            export WEBKIT_DISABLE_DMABUF_RENDERER=1
-            export WEBKIT_DISABLE_COMPOSITING_MODE=1
-            export WEBKIT_DISABLE_DMABUF_RENDERER=1
+            # NOTE: no WEBKIT_DISABLE_DMABUF_RENDERER / WEBKIT_DISABLE_COMPOSITING_MODE
+            # here — prod (nix/qxchat.nix) documents that forcing the legacy renderer
+            # segfaults the UI process on AMD + Wayland. DMABUF is the default.
+            #
+            # Host GTK modules (e.g. colorreload-gtk-module from the host theme)
+            # are ABI-incompatible with the nix GTK: drop them in dev.
+            unset GTK_MODULES
 
-            export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${
+            # Prepend (not append): host libs in a pre-existing LD_LIBRARY_PATH
+            # must not shadow the nix stack (stale system libfontconfig parsing
+            # /etc/fonts with new syntax = warning flood, and worse). This
+            # mirrors the prod wrapper, which prefixes its runtimeLibPath.
+            export LD_LIBRARY_PATH="${
               pkgs.lib.makeLibraryPath [
                 webkitgtk
 
@@ -272,8 +289,20 @@
                 pkgs.gst_all_1.gst-plugins-ugly
                 pkgs.gst_all_1.gst-libav
                 pkgs.libayatana-appindicator
+
+                # GL/GPU stack for the WebKit DMABUF renderer (prod parity).
+                pkgs.libdrm
+                pkgs.libgbm
+                pkgs.libglvnd
+                pkgs.mesa
+                pkgs.libepoxy
+                pkgs.wayland
+                pkgs.pipewire
               ]
-            }"
+            }:''${LD_LIBRARY_PATH:-}"
+
+            export PIPEWIRE_MODULE_DIR="${pkgs.pipewire}/lib/pipewire-0.3"
+            export SPA_PLUGIN_DIR="${pkgs.pipewire}/lib/spa-0.2"
 
             export GIO_EXTRA_MODULES="${pkgs.glib-networking}/lib/gio/modules"
             export GTK_PATH="${pkgs.gtk3}/lib/gtk-3.0"
