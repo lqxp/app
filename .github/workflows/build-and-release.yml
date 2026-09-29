@@ -204,9 +204,24 @@ jobs:
           QXP_CALLS_ENABLED: ${{ env.QXP_CALLS_ENABLED }}
           QXP_CALLS_UNAVAILABLE_REASON: ${{ env.QXP_CALLS_UNAVAILABLE_REASON }}
         run: |
+          # GitHub Actions matérialise un secret ABSENT en variable VIDE (""),
+          # et tauri-bundler teste la PRÉSENCE (var_os) de APPLE_CERTIFICATE /
+          # APPLE_CERTIFICATE_PASSWORD sans vérifier leur contenu :
+          # une valeur vide déclenche `security import` d'un certificat vide
+          # => "SecKeychainItemImport: One or more parameters passed to a
+          # function were not valid" et le bundle macOS échoue.
+          # On retire donc toute variable Apple vide pour retomber proprement
+          # sur la signature ad-hoc ("-") de tauri.conf.json > bundle > macOS.
+          for var in APPLE_SIGNING_IDENTITY APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD \
+                     APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID \
+                     APPLE_API_ISSUER APPLE_API_KEY APPLE_API_KEY_PATH; do
+            if [ -z "${!var:-}" ]; then
+              unset "$var" || true
+            fi
+          done
           # Défaut explicite : signature ad-hoc si aucun secret Apple configuré.
           # (tauri.conf.json contient déjà "signingIdentity": "-",
-          # mais une variable vide écraserait ce défaut — on la normalise ici.)
+          # mais on le fixe ici pour être sûr qu'il n'est jamais vide.)
           if [ -z "${APPLE_SIGNING_IDENTITY:-}" ]; then
             export APPLE_SIGNING_IDENTITY="-"
           fi
