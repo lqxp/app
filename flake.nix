@@ -90,9 +90,9 @@
 
         gstPluginPath = pkgs.lib.concatStringsSep ":" (map (pkg: "${pkg}/lib/gstreamer-1.0") gstPlugins);
 
-        webkitgtk = pkgs.webkitgtk_4_1.override {
-          enableExperimental = true;
-        };
+        # 0-compilation: stock webkitgtk_4_1 from binary cache.
+        # Do NOT enableExperimental (webkit 2.54 -> USE_VULKAN -> volk -> ~9000 TU rebuild).
+        webkitgtk = pkgs.webkitgtk_4_1;
 
       in
       {

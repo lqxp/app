@@ -75,9 +75,10 @@ let
         or (throw "qxchat: missing binary hash for ${stdenv.hostPlatform.system}");
   };
 
-  webkitgtk = webkitgtk_4_1.override {
-    enableExperimental = true;
-  };
+  # 0-compilation: use stock webkitgtk_4_1 from binary cache.
+  # Do NOT override with enableExperimental=true (webkit 2.54 enables
+  # USE_VULKAN -> needs volk -> source rebuild ~9000 TU).
+  webkitgtk = webkitgtk_4_1;
 
   gstPlugins = [
     gst_all_1.gstreamer
