@@ -26,3 +26,6 @@ src-tauri/gen/apple/build/
 .codex
 package-lock.json
 bun.lock
+
+# Accidental flatpak-builder state at repo root (local flow uses flatpak/.flatpak-builder)
+/.flatpak-builder/
