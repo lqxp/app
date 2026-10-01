@@ -4491,7 +4491,7 @@ dependencies = [
 
 [[package]]
 name = "qxchat"
-version = "1.20.10"
+version = "1.20.11"
 dependencies = [
  "apple-metal",
  "arti-client",
