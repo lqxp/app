@@ -3,6 +3,9 @@
   <id>com.getqxchat.app</id>
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
+  <developer>
+    <name>QxChat team</name>
+  </developer>
   <name>QxChat</name>
   <summary>End-to-end encrypted messaging, native everywhere</summary>
   <description>

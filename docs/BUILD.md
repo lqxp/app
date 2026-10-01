@@ -64,6 +64,39 @@ GNOME Platform/Sdk `50` is pulled from Flathub on first run if missing.
 `flatpak`, `flatpak-builder` and `appstream` are provided by `nix develop`;
 `flatpak/staging/` holds the (gitignored) staging area.
 
+## Flathub submission
+
+Local builds (`flatpak/com.getqxchat.app.yml`) cannot be submitted as-is:
+Flathub builders have no network and accept only public `url`/`git`
+sources. The submission-grade package lives in `flatpak/flathub/`:
+
+- `com.getqxchat.app.yml` — manifest with SDK extensions for toolchains
+  (`rust-stable`, `node22`), tray stack built from source (dbusmenu,
+  ayatana-ido/indicator/appindicator), `git` app source + generated
+  `cargo-sources.json` + per-arch frontend-deps release assets.
+- `cargo-sources.json` — generated from `src-tauri/Cargo.lock`
+  (`flatpak-cargo-generator.py`); regenerate whenever the lockfile changes.
+- Screenshots for the metainfo are still TODO (capture 16:9 + 4:3 from the
+  running app before submitting).
+
+Release checklist (Flathub updates are manual PRs):
+
+1. commit everything, cut the release tag (must contain `flatpak/` metadata)
+2. CI (`flathub-assets.yml`) attaches
+   `qxchat-frontend-deps-<tag>-<arch>.tar.gz` to the release; copy the
+   printed sha256 into the manifest's frontend-deps sources
+3. bump tag/commit/frontend-deps URLs in `flatpak/flathub/com.getqxchat.app.yml`
+4. run `flatpak-builder-lint` on manifest + repo, fix all errors
+5. open the PR yourself (`flathub/flathub`, base `new-pr`, title
+   `Add com.getqxchat.app`) and answer reviewers
+
+AI disclosure (Flathub policy, mandatory): this manifest and its packaging
+were AI-assisted — review and understand every line before submitting, and
+never let tooling open the PR or write review replies for you.
+
+After merge + first official build, claim the ✓ checkmark via domain
+verification (`getqxchat.com/.well-known/org.flathub.VerifiedApps.txt`).
+
 ## Runtime config injection
 
 The packaged web client runtime payload (`window.__QXP_RUNTIME__`) can be generated in two ways:
