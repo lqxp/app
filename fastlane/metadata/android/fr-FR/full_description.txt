@@ -1,11 +1,16 @@
-QxChat est une messagerie chiffrée de bout en bout : ni nos serveurs ni personne d'autre ne peut lire vos messages.
+QxChat — la messagerie qui ne peut pas vous lire.
 
-• Chiffrement de bout en bout sur tous les salons et appels
-• Synchronisation multi-appareils via QxCloudSync : vos salons et clés vous suivent partout
-• Appels vocaux et tableau blanc collaboratif
-• Mode Tor intégré, verrouillage client, coffre-leurre, récupération en 12 mots
-• Zéro pistage, zéro publicité, code open source
+Chiffrement de bout en bout sur tout : messages, médias, appels. Nos serveurs ne relaient que des paquets chiffrés qu'ils sont incapables de déchiffrer. Pas de publicité, pas de pistage, pas d'analytics. Zéro.
 
-Vos clés restent sur vos appareils. Le serveur ne fait que relayer des paquets chiffrés qu'il ne peut pas lire.
+• Messages et salons chiffrés de bout en bout (AES-256-GCM)
+• Appels vocaux chiffrés et tableau blanc collaboratif
+• Sync multi-appareils via QxCloudSync : vos salons et vos clés vous suivent partout
+• Inscription pseudonyme : pseudo + mot de passe, sans email ni numéro de téléphone
+• Récupération en 12 mots, verrouillage client, coffre-leurre, mode streamer
+• Mode Tor intégré, auto-hébergeable : connectez l'app à votre propre serveur
+• Suppression du compte et des données depuis l'app, à tout moment
+• Open source (MIT) — ne nous croyez pas, lisez le code
 
-QxChat est gratuit et open source (MIT). Rejoignez-nous sur getqxchat.com.
+Vos clés restent sur vos appareils. Vos données restent chez vous.
+
+Gratuit, sans publicité, sans abonnement. Rejoignez-nous sur getqxchat.com.

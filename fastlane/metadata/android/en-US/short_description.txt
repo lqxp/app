@@ -1,1 +1,1 @@
-E2EE messaging, calls and multi-device sync. Zero tracking.
+End-to-end encrypted messaging, calls and multi-device sync. Zero tracking.
