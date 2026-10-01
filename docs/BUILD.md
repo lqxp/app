@@ -82,9 +82,9 @@ sources. The submission-grade package lives in `flatpak/flathub/`:
 Release checklist (Flathub updates are manual PRs):
 
 1. commit everything, cut the release tag (must contain `flatpak/` metadata)
-2. CI (`flathub-assets.yml`) attaches
-   `qxchat-frontend-deps-<tag>-<arch>.tar.gz` to the release; copy the
-   printed sha256 into the manifest's frontend-deps sources
+  2. CI (`build-and-release.yml`, job `frontend-deps`) attaches
+     `qxchat-frontend-deps-<tag>-<arch>.tar.gz` to the release; copy the
+     printed sha256 into the manifest's frontend-deps sources
 3. bump tag/commit/frontend-deps URLs in `flatpak/flathub/com.getqxchat.app.yml`
 4. run `flatpak-builder-lint` on manifest + repo, fix all errors
 5. open the PR yourself (`flathub/flathub`, base `new-pr`, title
