@@ -123,7 +123,7 @@ let
   );
 
   desktopItem = makeDesktopItem {
-    name = "com.qxp.client";
+    name = "com.getqxchat.app";
     desktopName = "QxChat";
     exec = "qxchat";
     terminal = false;
@@ -133,7 +133,7 @@ let
     ];
     icon = "qxchat";
     extraConfig = {
-      StartupWMClass = "com.qxp.client";
+      StartupWMClass = "com.getqxchat.app";
     };
   };
 in
@@ -207,7 +207,7 @@ stdenv.mkDerivation {
   # can re-add a workaround via their own wrapProgram override.
   postFixup = ''
     wrapProgram "$out/bin/qxchat" \
-      --set G_APPLICATION_ID "com.qxp.client" \
+      --set G_APPLICATION_ID "com.getqxchat.app" \
       --prefix LD_LIBRARY_PATH : "${runtimeLibPath}" \
       --set GIO_MODULE_DIR "${glib-networking}/lib/gio/modules" \
       --set GIO_EXTRA_MODULES "${glib-networking}/lib/gio/modules" \

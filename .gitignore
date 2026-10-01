@@ -17,6 +17,12 @@ src-tauri/gen/apple/build/
 *.jks
 *.keystore
 *.jks.base64
+# Flatpak local staging (copies made by scripts/build-flatpak.sh)
+/flatpak/qxchat
+/flatpak/icon.png
+/flatpak/build/
+/flatpak/.flatpak-builder/
+/flatpak/*.flatpak
 .codex
 package-lock.json
 bun.lock

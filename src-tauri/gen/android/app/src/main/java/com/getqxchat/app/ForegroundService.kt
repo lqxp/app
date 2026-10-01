@@ -1,4 +1,4 @@
-package com.qxp.client
+package com.getqxchat.app
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -27,8 +27,8 @@ class ForegroundService : Service() {
   companion object {
     private const val CHANNEL_ID = "qxchat-background"
     private const val NOTIFICATION_ID = 101
-    private const val ACTION_START = "com.qxp.client.action.START_BACKGROUND"
-    private const val ACTION_STOP = "com.qxp.client.action.STOP_BACKGROUND"
+    private const val ACTION_START = "com.getqxchat.app.action.START_BACKGROUND"
+    private const val ACTION_STOP = "com.getqxchat.app.action.STOP_BACKGROUND"
 
     @Volatile
     private var instance: ForegroundService? = null

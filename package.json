@@ -16,6 +16,7 @@
     "build:linux": "scripts/tauri-build.sh --bundles appimage,deb,rpm",
     "build:linux:x64": "scripts/tauri-build.sh --target x86_64-unknown-linux-gnu --bundles appimage,deb,rpm",
     "build:linux:arm64": "scripts/tauri-build.sh --target aarch64-unknown-linux-gnu --bundles appimage,deb,rpm",
+    "build:flatpak": "scripts/build-flatpak.sh",
     "build:android": "scripts/build-android.sh",
     "adb": "scripts/adb-deploy.sh",
     "ios:init": "tauri ios init --skip-targets-install",

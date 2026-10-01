@@ -1,0 +1,11 @@
+QxChat est une messagerie chiffrée de bout en bout : ni nos serveurs ni personne d'autre ne peut lire vos messages.
+
+• Chiffrement de bout en bout sur tous les salons et appels
+• Synchronisation multi-appareils via QxCloudSync : vos salons et clés vous suivent partout
+• Appels vocaux et tableau blanc collaboratif
+• Mode Tor intégré, verrouillage client, coffre-leurre, récupération en 12 mots
+• Zéro pistage, zéro publicité, code open source
+
+Vos clés restent sur vos appareils. Le serveur ne fait que relayer des paquets chiffrés qu'il ne peut pas lire.
+
+QxChat est gratuit et open source (MIT). Rejoignez-nous sur getqxchat.com.

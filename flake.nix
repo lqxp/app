@@ -143,6 +143,10 @@
             gradle
             jdk
 
+            flatpak
+            flatpak-builder
+            appstream
+
             pkg-config
             gobject-introspection
 

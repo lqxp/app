@@ -88,7 +88,7 @@ The commented-out `build-ios` job in the main release workflow requires full App
 
 - The 7-day limit is per-signature. AltStore/SideStore auto-refresh before expiry.
 - A free Apple ID can sign 10 app IDs per 7 days.
-- The app identifier (`com.qxp.client`) must match what the user signs with.
+- The app identifier (`com.getqxchat.app`) must match what the user signs with.
 - If the CI produces a simulator-only build, users must build locally for their device.
 
 ## Verification

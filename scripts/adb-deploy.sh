@@ -8,7 +8,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-PACKAGE="com.qxp.client"
+PACKAGE="com.getqxchat.app"
 APK_DIR="src-tauri/gen/android/app/build/outputs/apk"
 DEV_PORT="${QXP_DEV_PORT:-4560}"
 

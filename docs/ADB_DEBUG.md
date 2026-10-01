@@ -55,7 +55,7 @@ ANDROID_KEY_ALIAS=lqxp
 
 ```sh
 # Uninstall the old version (required if signature changed)
-adb uninstall com.qxp.client
+adb uninstall com.getqxchat.app
 
 # Install the new APK
 adb install src-tauri/gen/android/app/build/outputs/apk/release/app-release.apk
@@ -101,13 +101,13 @@ adb shell cat /proc/net/unix | grep devtools
 adb shell pm list packages | grep qxp
 
 # Installed version
-adb shell dumpsys package com.qxp.client | grep versionName
+adb shell dumpsys package com.getqxchat.app | grep versionName
 
 # Clear app data (full reset)
-adb shell pm clear com.qxp.client
+adb shell pm clear com.getqxchat.app
 
 # Force stop
-adb shell am force-stop com.qxp.client
+adb shell am force-stop com.getqxchat.app
 
 # Take a screenshot
 adb exec-out screencap -p > screenshot.png
@@ -145,7 +145,7 @@ zipalign -c -P 16 -v 4 app-release.apk
 ## Troubleshooting
 
 ### `INSTALL_FAILED_UPDATE_INCOMPATIBLE`
-The APK signature changed → run `adb uninstall com.qxp.client` first.
+The APK signature changed → run `adb uninstall com.getqxchat.app` first.
 
 ### `Keystore was tampered with, or password was incorrect`
 The password doesn't match the keystore. Create a new one:

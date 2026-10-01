@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.getqxchat.app</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>QxChat</name>
+  <summary>End-to-end encrypted messaging, native everywhere</summary>
+  <description>
+    <p>
+      QxChat is an end-to-end encrypted messenger with voice calls,
+      device sync via QxCloudSync, and privacy modes. Same rooms,
+      same keys, every screen.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.getqxchat.app.desktop</launchable>
+  <url type="homepage">https://getqxchat.com</url>
+  <url type="help">https://getqxchat.com/wiki</url>
+  <provides>
+    <id>com.getqxchat.app.desktop</id>
+  </provides>
+  <releases>
+    <release version="1.20.10" date="2026-10-01"/>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>

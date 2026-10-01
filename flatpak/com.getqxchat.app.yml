@@ -1,0 +1,48 @@
+app-id: com.getqxchat.app
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: qxchat
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=x11
+  - --socket=wayland
+  - --socket=pulseaudio
+  - --device=dri
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --filesystem=xdg-download
+  - --env=G_APPLICATION_ID=com.getqxchat.app
+modules:
+  # Upstream Rust toolchain, pre-extracted by scripts/build-flatpak.sh.
+  # The GNOME SDK ships no Rust, and a Nix-built binary cannot run under the
+  # Flatpak runtime (its /nix loader is absent in the sandbox), so the app
+  # itself is compiled below against the SDK.
+  - name: rust-toolchain
+    buildsystem: simple
+    build-commands:
+      - ./install.sh --prefix=/app/toolchain
+    sources:
+      - type: dir
+        path: staging/toolchain
+  - name: qxchat
+    buildsystem: simple
+    build-commands:
+      - |
+        export PATH=/app/toolchain/bin:$PATH
+        export CARGO_HOME="$PWD/.cargo-home"
+        export CARGO_TARGET_DIR="$PWD/target"
+        export CARGO_NET_OFFLINE=true
+        cargo build --release --offline --frozen --manifest-path app/src-tauri/Cargo.toml
+        install -Dm755 target/release/qxchat /app/bin/qxchat
+        install -Dm644 app/com.getqxchat.app.desktop /app/share/applications/com.getqxchat.app.desktop
+        install -Dm644 app/com.getqxchat.app.metainfo.xml /app/share/metainfo/com.getqxchat.app.metainfo.xml
+        install -Dm644 app/src-tauri/icons/icon.png /app/share/icons/hicolor/512x512/apps/com.getqxchat.app.png
+        rm -rf /app/toolchain
+    sources:
+      # Assembled by scripts/build-flatpak.sh: src-tauri (minus target/ and
+      # Android build dirs), built frontend (client/dist), vendored cargo
+      # deps + .cargo/config, desktop entry, metainfo.
+      - type: archive
+        path: staging/sources.tar.gz

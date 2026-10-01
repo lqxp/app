@@ -3,7 +3,7 @@
 //! On Android the WebView does not reliably surface system permission prompts
 //! (camera, microphone, notifications, media/storage). This plugin bridges the
 //! frontend to the native Android runtime-permission API through a small Kotlin
-//! plugin (`com.qxp.client.PermissionsPlugin`) backed by the `@TauriPlugin`
+//! plugin (`com.getqxchat.app.PermissionsPlugin`) backed by the `@TauriPlugin`
 //! declarations in `PermissionsPlugin.kt`.
 //!
 //! On desktop / iOS the commands are harmless no-ops that report the relevant
@@ -29,7 +29,7 @@ use tauri::{
 use tauri::Manager;
 
 #[cfg(target_os = "android")]
-const PLUGIN_IDENTIFIER: &str = "com.qxp.client";
+const PLUGIN_IDENTIFIER: &str = "com.getqxchat.app";
 
 #[cfg(target_os = "android")]
 const PLUGIN_CLASS: &str = "PermissionsPlugin";

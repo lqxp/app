@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=QxChat
+Comment=End-to-end encrypted messaging
+Exec=qxchat
+Icon=com.getqxchat.app
+Terminal=false
+Type=Application
+Categories=Network;Chat;
+StartupWMClass=com.getqxchat.app

@@ -3,7 +3,7 @@
 //! On Android the OS aggressively suspends WebViews and kills background
 //! activities, which tears down the frontend WebSocket and long-lived WebRTC
 //! calls. To keep the "precious socket" alive we run a native foreground
-//! service (`com.qxp.client.ForegroundService`) with a partial wake lock and a
+//! service (`com.getqxchat.app.ForegroundService`) with a partial wake lock and a
 //! persistent notification. That tells Android the app is doing important
 //! background work, so it will not kill/suspend the WebView.
 //!
@@ -21,7 +21,7 @@ use tauri::{
 use tauri::{plugin::PluginHandle, Manager};
 
 #[cfg(target_os = "android")]
-const PLUGIN_IDENTIFIER: &str = "com.qxp.client";
+const PLUGIN_IDENTIFIER: &str = "com.getqxchat.app";
 
 #[cfg(target_os = "android")]
 const PLUGIN_CLASS: &str = "BackgroundPlugin";

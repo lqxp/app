@@ -1,0 +1,1 @@
+Messagerie chiffrée E2EE, appels et sync multi-appareils. Zéro pistage.

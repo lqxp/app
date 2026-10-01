@@ -1,4 +1,4 @@
-package com.qxp.client
+package com.getqxchat.app
 
 import android.Manifest
 import android.app.Activity

@@ -1,4 +1,4 @@
-package com.qxp.client
+package com.getqxchat.app
 
 import android.app.Activity
 import app.tauri.annotation.Command

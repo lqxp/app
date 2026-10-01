@@ -36,10 +36,10 @@ val hasReleaseSigning = listOf(
 
 android {
     compileSdk = 36
-    namespace = "com.qxp.client"
+    namespace = "com.getqxchat.app"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
-        applicationId = "com.qxp.client"
+        applicationId = "com.getqxchat.app"
         minSdk = 24
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()

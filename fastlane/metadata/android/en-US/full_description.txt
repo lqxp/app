@@ -1,0 +1,11 @@
+QxChat is an end-to-end encrypted messenger: neither our servers nor anyone else can read your messages.
+
+• End-to-end encryption on every room and call
+• Multi-device sync via QxCloudSync: your rooms and keys follow you everywhere
+• Voice calls and collaborative whiteboard
+• Built-in Tor mode, client lock, decoy vault, 12-word recovery
+• Zero tracking, zero ads, open source code
+
+Your keys stay on your devices. The server only relays encrypted packets it cannot read.
+
+QxChat is free and open source (MIT). Join us at getqxchat.com.
