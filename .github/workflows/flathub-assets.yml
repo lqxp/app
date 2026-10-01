@@ -13,10 +13,13 @@ name: Flathub Assets
 # flatpak/flathub/com.getqxchat.app.yml (frontend-deps url sources).
 
 on:
-  # Runs after the main release workflow publishes the GitHub release
-  # (the release must exist: we only upload assets, never create it).
-  release:
-    types: [published]
+  # Runs after the main release workflow completes. (A `release: published`
+  # trigger does NOT fire here: the release is published with GITHUB_TOKEN
+  # and token-triggered events never start new runs. workflow_run chaining
+  # is the documented workaround.)
+  workflow_run:
+    workflows: [Build And Release]
+    types: [completed]
   workflow_dispatch:
     inputs:
       tag:
@@ -27,6 +30,9 @@ on:
 jobs:
   frontend-deps:
     name: Frontend deps (${{ matrix.asset_arch }})
+    # Only for successful releases (the tag push also triggers Build And
+    # Release failures we must not attach assets to).
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
@@ -39,7 +45,7 @@ jobs:
       - name: Checkout release tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          ref: ${{ github.event.workflow_run.head_branch || inputs.tag }}
           submodules: recursive
           fetch-depth: 0
 
@@ -55,7 +61,7 @@ jobs:
 
       - name: Assemble deps tarball (physical deps/ nesting, cp -a keeps symlinks)
         env:
-          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          TAG: ${{ github.event.workflow_run.head_branch || inputs.tag }}
         run: |
           ASSET="qxchat-frontend-deps-${TAG}-${{ matrix.asset_arch }}.tar.gz"
           rm -rf /tmp/fedeps && mkdir -p /tmp/fedeps/deps
@@ -67,7 +73,7 @@ jobs:
       - name: Upload to release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          TAG: ${{ github.event.workflow_run.head_branch || inputs.tag }}
         run: |
           ASSET="qxchat-frontend-deps-${TAG}-${{ matrix.asset_arch }}.tar.gz"
           gh release upload "$TAG" "$ASSET" --clobber
