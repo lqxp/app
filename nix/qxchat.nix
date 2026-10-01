@@ -50,7 +50,7 @@
   alsa-lib,
   # Overridable so a release flake can pin an exact version + hashes
   # without editing this file (see QxChat_<version>_flake.nix assets).
-  version ? "1.20.11",
+  version ? "1.20.12",
   binaryHashes ? {
     x86_64-linux = "sha256-FYke/tUwxsQ/TQUFLonTPo4SwGjg1gHKE6Ne3Vfdzr8=";
     aarch64-linux = "sha256-rsrSbZUm4iAWoJPr7Csedaf973PER99xdjWpd5FH1fQ=";
