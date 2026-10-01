@@ -113,17 +113,17 @@ modules:
     sources:
       - type: git
         url: https://github.com/lqxp/app.git
-        tag: v1.20.10
-        commit: 4834fe2083dc4b118d98bc02bf4aebafbc1a1dbd
+        tag: v1.20.12
+        commit: 2d9c721109f172acd0116093da905cc2accf560b
         disable-submodules: false
       - cargo-sources.json
       - type: archive
-        url: https://github.com/lqxp/app/releases/download/v1.20.10/qxchat-frontend-deps-v1.20.10-x86_64.tar.gz
+        url: https://github.com/lqxp/app/releases/download/v1.20.12/qxchat-frontend-deps-v1.20.12-x86_64.tar.gz
         only-arches:
           - x86_64
-        sha256: '0000000000000000000000000000000000000000000000000000000000000000'
+        sha256: 7f36eb8c28177c9d351694f04da665ed3d6873239d917fdc2a8bc6432ad5f009
       - type: archive
-        url: https://github.com/lqxp/app/releases/download/v1.20.10/qxchat-frontend-deps-v1.20.10-aarch64.tar.gz
+        url: https://github.com/lqxp/app/releases/download/v1.20.12/qxchat-frontend-deps-v1.20.12-aarch64.tar.gz
         only-arches:
           - aarch64
-        sha256: '0000000000000000000000000000000000000000000000000000000000000000'
+        sha256: 034672f27f5e92f9ddd030af5e395d78c324bbfd6dea38274021ad1b5a9cffa8
