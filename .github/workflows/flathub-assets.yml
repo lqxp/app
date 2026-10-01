@@ -49,7 +49,9 @@ jobs:
           bun-version: 1.3.12
 
       - name: Install frontend dependencies
-        run: cd client && bun install --frozen-lockfile
+        run: |
+          rm -f client/pnpm-lock.yaml client/pnpm-workspace.yaml
+          cd client && bun install --frozen-lockfile
 
       - name: Assemble deps tarball (physical deps/ nesting, cp -a keeps symlinks)
         env:
