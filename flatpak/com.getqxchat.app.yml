@@ -15,34 +15,45 @@ finish-args:
   - --filesystem=xdg-download
   - --env=G_APPLICATION_ID=com.getqxchat.app
 modules:
-  # Upstream Rust toolchain, pre-extracted by scripts/build-flatpak.sh.
-  # The GNOME SDK ships no Rust, and a Nix-built binary cannot run under the
-  # Flatpak runtime (its /nix loader is absent in the sandbox), so the app
-  # itself is compiled below against the SDK.
-  - name: rust-toolchain
-    buildsystem: simple
-    build-commands:
-      - ./install.sh --prefix=/app/toolchain
-    sources:
-      - type: dir
-        path: staging/toolchain
+  # Upstream Rust toolchain, assembled by scripts/build-flatpak.sh into a
+  # proper prefix layout (rustc discovers its sysroot relative to itself).
+  # Used IN PLACE from the build directory, never installed to /app:
+  # flatpak-builder strips/debuginfos everything in /app at module commit,
+  # which corrupts rustc's oddly-linked libLLVM.
   - name: qxchat
     buildsystem: simple
     build-commands:
       - |
-        export PATH=/app/toolchain/bin:$PATH
+        set -e
+        if [ -x toolchain-install/bin/rustc ]; then TC=toolchain-install; else TC=.; fi
+        export PATH="$PWD/$TC/bin:$PATH"
+        export RUSTC="$PWD/$TC/bin/rustc"
         export CARGO_HOME="$PWD/.cargo-home"
         export CARGO_TARGET_DIR="$PWD/target"
         export CARGO_NET_OFFLINE=true
-        cargo build --release --offline --frozen --manifest-path app/src-tauri/Cargo.toml
+        # Keep sandbox compilation to 4 cores max (host stays usable).
+        export CARGO_BUILD_JOBS=4
+        # Bake /app/lib into the binary's search path: the tray stack is
+        # dlopen'd at runtime by SONAME and the sandbox sets no
+        # LD_LIBRARY_PATH. (This binary only ever ships in the Flatpak.)
+        export RUSTFLAGS="-C link-args=-Wl,-rpath,/app/lib"
+        cargo build --release --offline --frozen --manifest-path src-tauri/Cargo.toml
+        install -d /app/lib
+        # NOTE: plain cp keeps the nix store's read-only modes; the files
+        # must be user-writable or flatpak-builder's strip step fails.
+        cp -d tray-libs/*.so* /app/lib/
+        chmod -R u+w /app/lib
         install -Dm755 target/release/qxchat /app/bin/qxchat
-        install -Dm644 app/com.getqxchat.app.desktop /app/share/applications/com.getqxchat.app.desktop
-        install -Dm644 app/com.getqxchat.app.metainfo.xml /app/share/metainfo/com.getqxchat.app.metainfo.xml
-        install -Dm644 app/src-tauri/icons/icon.png /app/share/icons/hicolor/512x512/apps/com.getqxchat.app.png
-        rm -rf /app/toolchain
+        install -Dm644 com.getqxchat.app.desktop /app/share/applications/com.getqxchat.app.desktop
+        install -Dm644 com.getqxchat.app.metainfo.xml /app/share/metainfo/com.getqxchat.app.metainfo.xml
+        install -Dm644 src-tauri/icons/icon.png /app/share/icons/hicolor/512x512/apps/com.getqxchat.app.png
     sources:
+      - type: dir
+        path: staging/toolchain-install
       # Assembled by scripts/build-flatpak.sh: src-tauri (minus target/ and
       # Android build dirs), built frontend (client/dist), vendored cargo
-      # deps + .cargo/config, desktop entry, metainfo.
+      # deps + .cargo/config, tray stack (tray-libs/), desktop entry,
+      # metainfo — all nested under app/ because flatpak-builder strips
+      # the first archive path component.
       - type: archive
         path: staging/sources.tar.gz

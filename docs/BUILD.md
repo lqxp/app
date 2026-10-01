@@ -47,17 +47,22 @@ bun run build:linux
 ## Flatpak (primary Linux packaging, local)
 
 ```bash
-bun run build:flatpak              # build + install for the current user
+bun run build:flatpak              # stage + build + install for the current user
 ./scripts/build-flatpak.sh --run   # build + install + launch
 ./scripts/build-flatpak.sh --bundle # also emit flatpak/com.getqxchat.app.flatpak
 ```
 
 Manifest + metadata live in `flatpak/` under the `com.getqxchat.app` app ID
-(same ID as Android/iOS/desktop). `scripts/build-flatpak.sh` builds the Tauri
-release binary (`--bundles none`), stages it next to the manifest, then runs
-`flatpak-builder --user --install`. GNOME Platform/Sdk `50` is pulled from
-Flathub on first run if missing. `flatpak-builder` and `flatpak` are provided
-by `nix develop`.
+(same ID as Android/iOS/desktop). The Tauri binary is compiled **inside**
+the GNOME SDK sandbox: a Nix-built binary cannot run under the Flatpak
+runtime (its `/nix` loader is absent in the sandbox). `scripts/build-flatpak.sh`
+(enters `nix develop` by itself) stages everything the offline sandbox build
+needs — a pinned upstream Rust toolchain (fetched once), the built frontend
+(`client/dist`), vendored cargo deps (re-done only when `Cargo.lock`
+changes) — then `flatpak-builder` compiles `--offline` and installs `--user`.
+GNOME Platform/Sdk `50` is pulled from Flathub on first run if missing.
+`flatpak`, `flatpak-builder` and `appstream` are provided by `nix develop`;
+`flatpak/staging/` holds the (gitignored) staging area.
 
 ## Runtime config injection
 
