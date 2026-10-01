@@ -13,10 +13,16 @@ name: Flathub Assets
 # flatpak/flathub/com.getqxchat.app.yml (frontend-deps url sources).
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  # Runs after the main release workflow publishes the GitHub release
+  # (the release must exist: we only upload assets, never create it).
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to attach assets to (e.g. v1.20.11)'
+        required: true
+        type: string
 
 jobs:
   frontend-deps:
@@ -30,9 +36,10 @@ jobs:
           - runner: ubuntu-24.04-arm
             asset_arch: aarch64
     steps:
-      - name: Checkout repository
+      - name: Checkout release tag
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
           submodules: recursive
           fetch-depth: 0
 
@@ -45,8 +52,9 @@ jobs:
         run: cd client && bun install --frozen-lockfile
 
       - name: Assemble deps tarball (physical deps/ nesting, cp -a keeps symlinks)
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: |
-          TAG="${GITHUB_REF_NAME}"
           ASSET="qxchat-frontend-deps-${TAG}-${{ matrix.asset_arch }}.tar.gz"
           rm -rf /tmp/fedeps && mkdir -p /tmp/fedeps/deps
           cp -a client/node_modules /tmp/fedeps/deps/
@@ -57,8 +65,8 @@ jobs:
       - name: Upload to release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: |
-          TAG="${GITHUB_REF_NAME}"
           ASSET="qxchat-frontend-deps-${TAG}-${{ matrix.asset_arch }}.tar.gz"
           gh release upload "$TAG" "$ASSET" --clobber
           echo "sha256 for flatpak/flathub/com.getqxchat.app.yml:"
