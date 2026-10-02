@@ -47,6 +47,12 @@
           "url": "https://github.com/*"
         },
         {
+          "url": "https://www.linkedin.com/*"
+        },
+        {
+          "url": "https://linkedin.com/*"
+        },
+        {
           "url": "mailto:*"
         },
         {
