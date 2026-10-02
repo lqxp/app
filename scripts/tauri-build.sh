@@ -15,6 +15,11 @@ load_dotenv() {
 
 load_dotenv
 
+# Force vendored xz (see liblzma-sys/static in src-tauri/Cargo.toml): without
+# this, macOS builds link /opt/homebrew/opt/xz/lib/liblzma.5.dylib and the
+# shipped app aborts at launch on user machines (dyld Team ID mismatch).
+export LZMA_API_STATIC="${LZMA_API_STATIC:-1}"
+
 build_target=""
 for arg in "$@"; do
   if [[ "$arg" == --target=* ]]; then

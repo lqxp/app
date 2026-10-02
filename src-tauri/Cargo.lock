@@ -4498,6 +4498,7 @@ dependencies = [
  "cpal",
  "discord-rich-presence",
  "fast-socks5",
+ "liblzma-sys",
  "reqwest",
  "screencapturekit",
  "serde",

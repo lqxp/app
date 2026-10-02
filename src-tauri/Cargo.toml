@@ -68,6 +68,12 @@ tokio-tungstenite = "0.24"
 # `static` compiles SQLite from source (`rusqlite/bundled`) so the Windows GNU
 # cross-compile does not need a system `libsqlite3` at link time.
 tor-dirmgr = { version = "0.22", features = ["static"] }
+# Force vendored liblzma (`liblzma-sys/static` compiles xz from source).
+# Without this, `liblzma-sys` links the CI runner's Homebrew
+# `/opt/homebrew/opt/xz/lib/liblzma.5.dylib` at build time; the absolute path
+# is baked into the binary and end-user Macs abort at launch (dyld Team ID
+# mismatch / missing library). Same class of bug as `tor-dirmgr/static` above.
+liblzma-sys = { version = "0.4", features = ["static"] }
 # `experimental-api` unlocks `DataStream::circuit()` so we can surface the live
 # circuit (guard → middle → exit) like Tor Browser.
 tor-proto = { version = "0.22", features = ["experimental-api"] }

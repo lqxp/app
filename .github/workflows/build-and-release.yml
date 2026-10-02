@@ -203,6 +203,9 @@ jobs:
           QXP_WS_URL: ${{ env.QXP_WS_URL }}
           QXP_CALLS_ENABLED: ${{ env.QXP_CALLS_ENABLED }}
           QXP_CALLS_UNAVAILABLE_REASON: ${{ env.QXP_CALLS_UNAVAILABLE_REASON }}
+          # Belt-and-suspenders with liblzma-sys/static in Cargo.toml: force the
+          # vendored xz build even if feature unification ever stops applying.
+          LZMA_API_STATIC: "1"
         run: |
           # GitHub Actions matérialise un secret ABSENT en variable VIDE (""),
           # et tauri-bundler teste la PRÉSENCE (var_os) de APPLE_CERTIFICATE /
@@ -245,6 +248,21 @@ jobs:
           echo "Verifying $APP_BUNDLE"
           codesign --verify --deep --strict --verbose=2 "$APP_BUNDLE" || true
           codesign -dv --verbose=4 "$APP_BUNDLE" || true
+          # Regression guard for the v1.20.12 launch crash (dyld abort on
+          # /opt/homebrew/opt/xz/lib/liblzma.5.dylib): the binary must not
+          # reference any Homebrew / local prefix. liblzma is vendored via
+          # liblzma-sys/static + LZMA_API_STATIC=1, so this fails the build
+          # instead of shipping a binary that aborts at launch.
+          BIN="$APP_BUNDLE/Contents/MacOS/qxchat"
+          if [ ! -x "$BIN" ]; then
+            BIN="$(find "$APP_BUNDLE/Contents/MacOS" -type f -perm +111 -print -quit)"
+          fi
+          echo "Checking linked libs for $BIN"
+          otool -L "$BIN"
+          if otool -L "$BIN" | grep -E '/opt/homebrew|/opt/local|/usr/local|liblzma'; then
+            echo "::error::Bundled binary links a Homebrew/local liblzma (see otool output above)"
+            exit 1
+          fi
           # spctl échoue (rejeté) pour une signature ad-hoc : c'est attendu
           # sans notarisation. On l'affiche à titre informatif sans faire
           # échouer le build.
