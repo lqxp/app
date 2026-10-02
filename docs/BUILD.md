@@ -350,6 +350,46 @@ Tauri exposes no foreground-service/background flag on Android (`backgroundThrot
 
 `flake.nix` include the Linux dependencies that Tauri expects on NixOS, including GTK, WebKitGTK 4.1, GLib, `libsoup_3`, `librsvg`, and the GIO networking module setup required by WebKit.
 
+### Calls (WebRTC) on NixOS
+
+Stock nixpkgs `webkitgtk_4_1` is built with `enableExperimental = false`, and
+upstream WebKit defaults `ENABLE_WEB_RTC` to `ENABLE_EXPERIMENTAL_FEATURES —
+so the stock library has no `RTCPeerConnection` at all. The symptom is the
+thread subtitle reporting that WebRTC is not supported, with the call button
+disabled. This is a packaging flag, not an app bug.
+
+Opt in (one full WebKit source build, then cached):
+
+```nix
+programs.qxchat = {
+  enable = true;
+  webrtcSupport = true;
+};
+```
+
+Mic/camera/screen-share additionally need the host media stack, which the
+wrapper cannot provide itself:
+
+- `services.pipewire.enable = true` (with WirePlumber) for mic/camera.
+- The portal backend matching your compositor for screen sharing, e.g.
+  `programs.qxchat.extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];`
+  on Hyprland (`-wlr` on Sway/wlroots, `-kde`/`-gnome` on those DEs).
+
+### WebKitGTK flickering / blank window on NixOS
+
+The DMABUF renderer + Mesa combination flickers or fails (`Failed to create
+GBM buffer`, `EGL_BAD_PARAMETER`, empty window) on some GPUs and Wayland
+sessions. Try, in order:
+
+```bash
+WEBKIT_DISABLE_DMABUF_RENDERER=1 qxchat   # helps most NVIDIA/Wayland setups
+GDK_BACKEND=x11 qxchat                    # XWayland fallback
+```
+
+Note: forcing the legacy renderer is known to segfault the UI process on
+AMD + Wayland with webkitgtk 2.52, so keep these as opt-in workarounds, not
+defaults.
+
 ## License
 
 MIT

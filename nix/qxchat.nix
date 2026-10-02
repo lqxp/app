@@ -7,6 +7,15 @@
 # tarball and injects it into a NixOS `ld` environment (patchelf + wrapProgram),
 # so updates are a download instead of a full Rust/WebKit rebuild.
 #
+# WebRTC calls need a WebKitGTK built with experimental features: upstream
+# defaults ENABLE_WEB_RTC to ENABLE_EXPERIMENTAL_FEATURES, and stock nixpkgs
+# webkitgtk_4_1 sets enableExperimental=false — so with the stock library the
+# app reports "WebRTC is not supported" and the call button stays disabled.
+# See programs.qxchat.webrtcSupport in ./module.nix for the opt-in override
+# (or pass `webkitgtk_4_1 = pkgs.webkitgtk_4_1.override { enableExperimental = true; }`
+# to callPackage yourself), at the cost of one full WebKit source build.
+# The GStreamer webrtc elements are already in the runtime closure below.
+#
 # Tarball layout (produced by .github/workflows/build-and-release.yml):
 #   qxchat-linux-<arch>/qxchat      (Tauri binary, frontend embedded)
 #   qxchat-linux-<arch>/icon.png    (optional app icon)
