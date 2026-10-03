@@ -39,6 +39,11 @@ fn main() {
                 ]),
             )
             .plugin(
+                "activity",
+                tauri_build::InlinedPlugin::new()
+                    .commands(&["get_activity", "set_detectable"]),
+            )
+            .plugin(
                 "permissions",
                 tauri_build::InlinedPlugin::new()
                     .commands(&["request_permissions", "check_permissions"]),

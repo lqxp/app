@@ -29,3 +29,7 @@ bun.lock
 
 # Accidental flatpak-builder state at repo root (local flow uses flatpak/.flatpak-builder)
 /.flatpak-builder/
+
+# Scratch crate validating the vendored rsRPC fork (sysinfo-free standalone
+# check); recreated on demand, never committed.
+/.rsrpc-check/

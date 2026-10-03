@@ -80,7 +80,8 @@ in
     export TRAY_LIBRARY_PATH="${pkgs.libayatana-appindicator}/lib/libayatana-appindicator3.so.1"
     export PATH="/usr/local/bin:''${PATH:-}"
     export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:${pkgConfigPath}:''${PKG_CONFIG_PATH:-}"
-    export WEBKIT_DISABLE_DMABUF_RENDERER=1
+    export -n WEBKIT_DISABLE_DMABUF_RENDERER 2>/dev/null || unset WEBKIT_DISABLE_DMABUF_RENDERER
+    export WEBKIT_DMABUF_RENDERER_FORCE_SHM=1
     export LQXP_APPIMAGE_FHS=1
     unset SOURCE_DATE_EPOCH
   '';

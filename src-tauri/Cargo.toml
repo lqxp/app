@@ -61,6 +61,18 @@ apple-metal = "=0.8.7"
 # Discord Rich Presence over the local Discord IPC socket (named pipes on
 # Windows, Unix sockets on macOS/Linux). MIT-licensed maintained fork.
 discord-rich-presence = "1"
+# Local activity detection (running-process scan for the QxChat-native rich
+# activity shown on profile cards). Desktop-only like the Discord IPC above.
+sysinfo = "0.32"
+# Vendored rsRPC fork (src/rsrpc): Discord-compatible local RPC server so
+# RPC-native apps publish real SET_ACTIVITY frames to QxChat. Its transport
+# (src/rsrpc_sws.rs, ex-simple-websockets) rides the existing
+# tokio-tungstenite 0.24 — no new network crate, no git dependency.
+serde_with = "3"
+chrono = "0.4"
+interprocess = "2"
+flume = "0.10"
+futures-util = "0.3"
 arti-client = { version = "0.22", features = ["experimental-api", "geoip"] }
 fast-socks5 = "0.9"
 tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time", "sync", "macros"] }

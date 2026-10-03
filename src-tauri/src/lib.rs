@@ -27,6 +27,19 @@ mod screen_audio;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 mod discord_rpc;
 
+/// Vendored rsRPC fork (Discord-compatible RPC server) + vendored
+/// simple-websockets transport. Desktop-only with the rest.
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+mod rsrpc;
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+mod rsrpc_sws;
+
+/// Local activity detection (process scan) feeding the QxChat-native rich
+/// activity on profile cards. Desktop-only: mobile OSes expose no reliable
+/// process list to the app.
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+mod activity;
+
 #[cfg(any(
     target_os = "linux",
     target_os = "dragonfly",
@@ -72,6 +85,7 @@ pub fn run() {
     let builder = builder
         .plugin(screen_audio::init())
         .plugin(discord_rpc::init())
+        .plugin(activity::init())
         .plugin(integrity::init())
         .plugin(tor::init())
         .plugin(tauri_plugin_updater::Builder::new().build())

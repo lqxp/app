@@ -6,8 +6,8 @@
   "packageManager": "bun@1.3.12",
   "homepage": "./",
   "scripts": {
-    "dev": "tauri dev",
-    "start": "tauri dev",
+    "dev": "VITE_QXP_SERVER_ORIGIN=http://localhost:4560 VITE_QXP_API_BASE_URL=http://localhost:4560 VITE_QXP_WS_URL=ws://localhost:4560/ws tauri dev --config src-tauri/tauri.dev.conf.json",
+    "start": "VITE_QXP_SERVER_ORIGIN=http://localhost:4560 VITE_QXP_API_BASE_URL=http://localhost:4560 VITE_QXP_WS_URL=ws://localhost:4560/ws tauri dev --config src-tauri/tauri.dev.conf.json",
     "build": "scripts/tauri-build.sh",
     "build:win": "scripts/build-windows.sh",
     "build:mac:arm64": "tauri build --target aarch64-apple-darwin --bundles app,dmg",

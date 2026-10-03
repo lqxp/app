@@ -76,6 +76,26 @@ in the codebase (`bun test src`):
 - Secrets (masters, epoch keys, syncRoot, SLH cache) live in RAM only,
   wiped on client lock; persisted blobs are AES-GCM envelopes.
 
+## Tauri (desktop shell)
+
+- Inline Rust plugins (`src-tauri/src/*.rs` via `Builder::new(name)`)
+  require FOUR touches, or the build panics with
+  `Permission <name>:allow-<cmd> not found`:
+  1. `src-tauri/src/<name>.rs` + `mod <name>;` in `src-tauri/src/lib.rs`
+     (desktop-gated like the other plugins).
+  2. `.plugin(<name>::init())` in the `lib.rs` builder chain.
+  3. `src-tauri/build.rs` — `InlinedPlugin::new().commands(&[...])` listing
+     EVERY `#[tauri::command]` (this generates the allow/deny permission IDs).
+  4. `src-tauri/capabilities/default.json` — `"<name>:allow-<cmd>"` entries.
+- Backend `cargo check` needs system GTK/WebKit libs (absent in this
+  container, so it cannot run here); new Rust code must still be validated
+  (docs, API signatures, existing patterns) before pushing.
+- Vendored forks live in-tree with an upstream pointer: `src-tauri/src/rsrpc/`
+  (rsRPC `v0.28.0`, minus its process scanner plus an `on_activity` hook) and
+  `src-tauri/src/rsrpc_sws.rs` (simple-websockets transport). A standalone
+  scratch crate (`.rsrpc-check/`, gitignored) compiles the real vendored code
+  and runs its unit tests when the full Tauri crate cannot be checked here.
+
 ## Git
 
 - This checkout (`client/`) is its own repo (`lqxp/client`); the parent

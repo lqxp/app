@@ -32,8 +32,10 @@ use tauri::{
     Manager, Runtime,
 };
 
-/// Discord application (client) ID for QxChat.
-const CLIENT_ID: &str = "1548385894283608145";
+/// Discord application (client) ID for QxChat. Also used by the activity
+/// plugin to drop our own outbound presence from the inbound native feed
+/// (self-loop guard).
+pub(crate) const QXCHAT_DISCORD_CLIENT_ID: &str = "1548385894283608145";
 
 /// Settings file in the app-data dir.
 const SETTINGS_FILE: &str = "discord-rpc.json";
@@ -255,7 +257,7 @@ fn worker_loop<R: Runtime>(
 
         if client.is_none() {
             // (Re)connect while Discord may be absent; never crash the app.
-            let mut c = DiscordIpcClient::new(CLIENT_ID);
+            let mut c = DiscordIpcClient::new(QXCHAT_DISCORD_CLIENT_ID);
             match c.connect() {
                 Ok(()) => {
                     client = Some(c);

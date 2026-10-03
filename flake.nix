@@ -90,9 +90,13 @@
 
         gstPluginPath = pkgs.lib.concatStringsSep ":" (map (pkg: "${pkg}/lib/gstreamer-1.0") gstPlugins);
 
-        # 0-compilation: stock webkitgtk_4_1 from binary cache.
-        # Do NOT enableExperimental (webkit 2.54 -> USE_VULKAN -> volk -> ~9000 TU rebuild).
-        webkitgtk = pkgs.webkitgtk_4_1;
+        # Experimental webkitgtk_4_1 (WebRTC enabled): upstream defaults
+        # ENABLE_WEB_RTC to ENABLE_EXPERIMENTAL_FEATURES, and the stock
+        # library leaves calls dead ("WebRTC is not supported"). Cost: a full
+        # WebKit source build (~9000 TU) on first use — no binary cache for
+        # a custom override. Revert to stock with:
+        #   webkitgtk = pkgs.webkitgtk_4_1;
+        webkitgtk = pkgs.webkitgtk_4_1.override { enableExperimental = true; };
 
       in
       {
@@ -254,16 +258,39 @@
             export GST_PLUGIN_SYSTEM_PATH="${gstPluginPath}"
             export GST_PLUGIN_PATH="${gstPluginPath}"
             export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules"
-            # NOTE: no WEBKIT_DISABLE_DMABUF_RENDERER / WEBKIT_DISABLE_COMPOSITING_MODE
-            # here — prod (nix/qxchat.nix) documents that forcing the legacy renderer
-            # segfaults the UI process on AMD + Wayland. DMABUF is the default.
-            #
             # Software GL by default in dev: a nix shell on a foreign distro has
             # no host EGL/DRI drivers wired up, so EGL display creation aborts
             # (EGL_BAD_PARAMETER). llvmpipe is slower but works everywhere.
             # Unset for real-GPU testing when host drivers are known good:
             #   export -n LIBGL_ALWAYS_SOFTWARE
             export LIBGL_ALWAYS_SOFTWARE=1
+            #
+            # Software WebKit rendering in dev: on stacks without a working
+            # GPU path the DMABUF renderer produces no frame (gray window
+            # after "Could not create default EGL display").
+            # WARNING: use FORCE_SHM, never WEBKIT_DISABLE_DMABUF_RENDERER=1 —
+            # on current WebKitGTK the latter empties the buffer transport
+            # mode, AcceleratedBackingStore::create() returns nullptr and the
+            # first update() SEGFAULTs (identical stack to block/buzz#3654).
+            # Same default as the fixed AppImage wrapper.
+            # Prod (nix/qxchat.nix) intentionally keeps full DMABUF.
+            export -n WEBKIT_DISABLE_DMABUF_RENDERER 2>/dev/null || unset WEBKIT_DISABLE_DMABUF_RENDERER
+            export WEBKIT_DMABUF_RENDERER_FORCE_SHM=1
+            # Last resort on broken Wayland stacks:
+            #   GDK_BACKEND=x11 bunx tauri dev   (XWayland)
+            #
+            # WebKit bubblewrap sandbox in dev: the sandbox profile misses paths
+            # inside a nix shell and the WebProcess dies on a trap
+            # ("NeedDebuggerBreak"). Dev-only escape hatch (never prod).
+            # NOTE: WEBKIT_FORCE_SANDBOX=0 is a no-op on current WebKit
+            # ("no longer allows disabling the sandbox") — this is the one.
+            export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1
+            #
+            # GSettings schemas in dev: without these, GTK file choosers and
+            # WebKit settings assert (`g_settings_schema_source_lookup`) and
+            # misbehave. Point at the nix schemas, never the host ones.
+            export GSETTINGS_SCHEMA_DIR="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}/glib-2.0/schemas:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}/glib-2.0/schemas"
+            export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share:${pkgs.gtk3}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
             #
             # Host GTK modules (e.g. colorreload-gtk-module from the host theme)
             # are ABI-incompatible with the nix GTK: drop them in dev.

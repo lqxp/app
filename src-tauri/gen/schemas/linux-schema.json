@@ -345,6 +345,30 @@
       "description": "Permission identifier",
       "oneOf": [
         {
+          "description": "Enables the get_activity command without any pre-configured scope.",
+          "type": "string",
+          "const": "activity:allow-get-activity",
+          "markdownDescription": "Enables the get_activity command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_detectable command without any pre-configured scope.",
+          "type": "string",
+          "const": "activity:allow-set-detectable",
+          "markdownDescription": "Enables the set_detectable command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_activity command without any pre-configured scope.",
+          "type": "string",
+          "const": "activity:deny-get-activity",
+          "markdownDescription": "Denies the get_activity command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_detectable command without any pre-configured scope.",
+          "type": "string",
+          "const": "activity:deny-set-detectable",
+          "markdownDescription": "Denies the set_detectable command without any pre-configured scope."
+        },
+        {
           "description": "Enables the is_background_running command without any pre-configured scope.",
           "type": "string",
           "const": "background:allow-is-background-running",

@@ -35,6 +35,8 @@
     "discord-rpc:allow-set-enabled",
     "discord-rpc:allow-set-show-platform",
     "discord-rpc:allow-get-status",
+    "activity:allow-get-activity",
+    "activity:allow-set-detectable",
     "permissions:allow-request-permissions",
     "permissions:allow-check-permissions",
     {

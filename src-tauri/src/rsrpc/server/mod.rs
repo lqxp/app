@@ -1,0 +1,24 @@
+// QXCHAT-FORK: process scanner module removed (QxChat runs its own
+// detection fed by the server detectable list). IPC + websocket servers kept.
+pub mod client_connector;
+pub mod ipc_utils;
+pub mod utils;
+pub mod websocket;
+
+#[cfg(target_os = "windows")]
+pub mod ipc_win;
+
+#[cfg(not(target_os = "windows"))]
+pub mod ipc_unix;
+
+#[cfg(target_os = "windows")]
+mod platform {
+    pub use super::ipc_win as ipc;
+}
+
+#[cfg(not(target_os = "windows"))]
+mod platform {
+    pub use super::ipc_unix as ipc;
+}
+
+pub use platform::ipc;
