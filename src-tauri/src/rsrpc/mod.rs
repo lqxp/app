@@ -114,13 +114,24 @@ pub fn map_rpc_activity(
         .chars()
         .take(64)
         .collect();
-    let started_at_ms = activity
+    // Native emitters (pypresence et al.) send `start` in seconds; the
+    // bridge path normalizes via `fix_timestamps()`, but this hook reads raw
+    // frames — normalize here too, with the same cutoff, so the elapsed
+    // clock is right. Values already in ms exceed now+100y in seconds and
+    // pass through untouched.
+    let started_raw = activity
         .timestamps
         .as_ref()
         .and_then(|t| t.start.as_ref())
         .map(|s| s.as_millis())
         .unwrap_or(0)
-        .max(0) as u64;
+        .max(0);
+    let sec_cutoff = chrono::Utc::now().timestamp() + (100 * 365 * 24 * 3600);
+    let started_at_ms = if started_raw > 0 && started_raw <= sec_cutoff {
+        (started_raw as u64).saturating_mul(1000)
+    } else {
+        started_raw as u64
+    };
     let app_id: String = incoming_app.chars().take(64).collect();
     let large_image = sanitize_artwork(activity.assets.as_ref().and_then(|a| a.large_image.as_deref()));
     let small_image = sanitize_artwork(activity.assets.as_ref().and_then(|a| a.small_image.as_deref()));
@@ -309,5 +320,32 @@ mod tests {
         assert_eq!(seen.name.chars().count(), 64);
         // Default TimeoutValue is 0 → hidden timer.
         assert_eq!(seen.started_at_ms, 0);
+    }
+
+    fn activity_with_start(start: i64) -> Activity {
+        serde_json::from_value(serde_json::json!({
+            "name": "Zed",
+            "type": 0,
+            "timestamps": { "start": start },
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn normalizes_second_timestamps_to_ms() {
+        // Native emitters send seconds (pypresence et al.): the hook must
+        // read them as seconds, not milliseconds (else "497035:49:14").
+        let sec = chrono::Utc::now().timestamp() - 79;
+        let seen =
+            map_rpc_activity(&activity_with_start(sec), Some("3"), "0", &game_names()).unwrap();
+        assert_eq!(seen.started_at_ms, (sec as u64) * 1000);
+    }
+
+    #[test]
+    fn passes_through_millisecond_timestamps() {
+        let ms = chrono::Utc::now().timestamp_millis();
+        let seen =
+            map_rpc_activity(&activity_with_start(ms), Some("3"), "0", &game_names()).unwrap();
+        assert_eq!(seen.started_at_ms, ms as u64);
     }
 }
