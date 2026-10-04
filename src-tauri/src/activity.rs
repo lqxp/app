@@ -18,7 +18,11 @@
 //! conflict.
 
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{
+    Arc, Mutex,
+    atomic::{AtomicBool, Ordering},
+};
+use std::sync::Once;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System};
@@ -41,6 +45,28 @@ struct ActivityState {
 
 /// Upper bound on the server map (alloc guard on hostile payloads).
 const MAX_SERVER_ENTRIES: usize = 250_000;
+
+/// Opt-in verbose logging, off by default. Enable with
+/// `QXCHAT_ACTIVITY_DEBUG=1` before starting the client; every
+/// `get_activity` poll then reports which source won (native RPC vs process
+/// scan) and which display fields it carried.
+static ACTIVITY_DEBUG_INIT: Once = Once::new();
+static ACTIVITY_DEBUG: AtomicBool = AtomicBool::new(false);
+
+fn activity_debug_enabled() -> bool {
+    ACTIVITY_DEBUG_INIT.call_once(|| {
+        if std::env::var("QXCHAT_ACTIVITY_DEBUG").as_deref() == Ok("1") {
+            ACTIVITY_DEBUG.store(true, Ordering::Relaxed);
+        }
+    });
+    ACTIVITY_DEBUG.load(Ordering::Relaxed)
+}
+
+fn activity_debug(message: impl AsRef<str>) {
+    if activity_debug_enabled() {
+        eprintln!("[qxchat-activity] {}", message.as_ref());
+    }
+}
 
 /// Detected activity exposed to the frontend.
 #[derive(Debug, Clone, serde::Serialize)]
@@ -330,6 +356,7 @@ fn set_detectable(
     }
     let count = map.len();
     *state.server_games.lock().unwrap() = map;
+    activity_debug(format!("detectable map replaced: {count} entries"));
     count
 }
 
@@ -340,10 +367,27 @@ fn set_detectable(
 fn get_activity(state: tauri::State<'_, ActivityState>) -> Option<DetectedActivity> {
     // Never crash the app from a detection pass.
     if let Some(rpc) = std::panic::catch_unwind(|| rpc_activity(&state)).ok().flatten() {
+        activity_debug(format!(
+            "source=rpc name={:?} kind={} details={} state={} large_art={} small_art={} has_app_id={} started_at={}",
+            rpc.name,
+            rpc.kind,
+            !rpc.details.is_empty(),
+            !rpc.state.is_empty(),
+            rpc.assets.as_ref().map(|a| !a.large.is_empty()).unwrap_or(false),
+            rpc.assets.as_ref().map(|a| !a.small.is_empty()).unwrap_or(false),
+            !rpc.app_id.is_empty(),
+            rpc.started_at,
+        ));
         return Some(rpc);
     }
     let snapshot = state.server_games.lock().unwrap().clone();
-    std::panic::catch_unwind(|| detect(&snapshot)).ok().flatten()
+    let found = std::panic::catch_unwind(|| detect(&snapshot)).ok().flatten();
+    activity_debug(format!(
+        "source={} name={:?}",
+        if found.is_some() { "scan" } else { "none" },
+        found.as_ref().map(|a| a.name.clone()).unwrap_or_default(),
+    ));
+    found
 }
 
 /// Starts the embedded Discord-compatible RPC server once: native apps
